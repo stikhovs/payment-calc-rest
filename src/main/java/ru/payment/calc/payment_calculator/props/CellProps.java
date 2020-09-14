@@ -15,6 +15,14 @@ public class CellProps {
 
     private GroupInfoCells groupInfoCells;
 
+    private WeekDaysOne weekDaysOne;
+
+    private WeekDaysTwo weekDaysTwo;
+
+    private StudentNames studentNames;
+
+    private StudentBalance studentBalance;
+
     /*private final List<String> groupInfoCells;
     private final List<String> studentNameCells;
     private final List<String> studentBalanceCells;
@@ -34,6 +42,40 @@ public class CellProps {
         private String classDurationOne;
         private String classDurationTwo;
         private String classStartTime;
+    }
+
+    @Data
+    public static class WeekDaysOne {
+        private String monday;
+        private String tuesday;
+        private String wednesday;
+        private String thursday;
+        private String friday;
+        private String saturday;
+        private String sunday;
+    }
+
+    @Data
+    public static class WeekDaysTwo {
+        private String monday;
+        private String tuesday;
+        private String wednesday;
+        private String thursday;
+        private String friday;
+        private String saturday;
+        private String sunday;
+    }
+
+    @Data
+    public static class StudentNames {
+        private String start;
+        private String end;
+    }
+
+    @Data
+    public static class StudentBalance {
+        private String start;
+        private String end;
     }
 
 }

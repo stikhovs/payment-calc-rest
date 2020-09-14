@@ -2,6 +2,7 @@ package ru.payment.calc.payment_calculator.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -21,6 +22,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class CalcController {
 
     private final CellProps cellProps;
@@ -32,7 +34,7 @@ public class CalcController {
         return cellProps.getGroupInfoCells().toString();
     }
 
-    @GetMapping("/home")
+    @GetMapping//("/home")
     public String home() {
         return "home";
     }
@@ -40,21 +42,18 @@ public class CalcController {
 
     @PostMapping("/upload")
     @SneakyThrows
-    public ModelAndView getGroupInfo(@RequestParam("fileToUpload") MultipartFile file) {
+    @ResponseBody
+    public List<Group> getGroupInfo(@RequestParam("fileToUpload") MultipartFile file) {
+        log.info("Start processing {}", file.getResource().getFilename());
         XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream());
-        List<Group> groupList = initGroupsService.init(workbook);
-        /*List<XSSFSheet> sheets = new ArrayList<>();
 
-        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            XSSFSheet sheet = workbook.getSheetAt(i);
-            if(!workbook.isSheetHidden(i)) {
-                sheets.add(sheet);
-            }
-        }*/
+        log.info("Start initializing groups");
+        List<Group> groupList = initGroupsService.init(workbook);
 
         ModelAndView modelAndView = new ModelAndView("groups", Map.of("groupList", groupList));
 
-        return modelAndView;
+        log.info("Group initializing completed");
+        return groupList;
     }
 
     @GetMapping("/init")

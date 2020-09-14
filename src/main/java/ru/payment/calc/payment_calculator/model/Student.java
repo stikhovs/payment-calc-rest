@@ -1,12 +1,11 @@
 package ru.payment.calc.payment_calculator.model;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+//@NoArgsConstructor
+@Builder
 public class Student {
     private String name;
     private double balance;
