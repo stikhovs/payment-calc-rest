@@ -30,27 +30,12 @@ cells:
   studentBalance:
     start: AF14
     end: AF33
-#
-#  indGraphicCells:
-#    - H14
-#    - H15
-#    - H16
-#    - H17
-#    - H18
-#    - H19
-#    - H20
-#    - H21
-#    - H22
-#    - H23
-#    - H24
-#    - H25
-#    - H26
-#    - H27
-#    - H28
-#    - H29
-#    - H30
-#    - H31
-#    - H32
-#    - H33
-#  singleDiscountColumn: M14
-#  permanentDiscountColumn: O14
+  individualGraphic:
+    start: H14
+    end: H33
+  singleDiscount:
+    start: M14
+    end: M33
+  permanentDiscount:
+    start: O14
+    end: O33

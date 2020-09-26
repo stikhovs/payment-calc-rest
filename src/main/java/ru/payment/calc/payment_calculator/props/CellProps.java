@@ -23,14 +23,11 @@ public class CellProps {
 
     private StudentBalance studentBalance;
 
-    /*private final List<String> groupInfoCells;
-    private final List<String> studentNameCells;
-    private final List<String> studentBalanceCells;
-    private final List<String> weekDaysOne;
-    private final List<String> weekDaysTwo;
-    private final List<String> indGraphicCells;
-    private final String singleDiscountColumn;
-    private final String permanentDiscountColumn;*/
+    private IndividualGraphic individualGraphic;
+
+    private SingleDiscount singleDiscount;
+
+    private PermanentDiscount permanentDiscount;
 
     @Data
     public static class GroupInfoCells {
@@ -77,5 +74,25 @@ public class CellProps {
         private String start;
         private String end;
     }
+
+    @Data
+    public static class IndividualGraphic {
+        private String start;
+        private String end;
+    }
+
+    @Data
+    public static class SingleDiscount {
+        private String start;
+        private String end;
+    }
+
+    @Data
+    public static class PermanentDiscount {
+        private String start;
+        private String end;
+    }
+
+
 
 }

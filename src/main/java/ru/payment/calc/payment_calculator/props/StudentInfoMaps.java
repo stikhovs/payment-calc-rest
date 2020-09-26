@@ -28,6 +28,27 @@ public class StudentInfoMaps {
         return initCellMap(start, end);
     }
 
+    @Bean
+    public Map<Integer, CellAddress> getIndividualGraphic() {
+        String start = cellProps.getIndividualGraphic().getStart();
+        String end = cellProps.getIndividualGraphic().getEnd();
+        return initCellMap(start, end);
+    }
+
+    @Bean
+    public Map<Integer, CellAddress> getSingleDiscount() {
+        String start = cellProps.getSingleDiscount().getStart();
+        String end = cellProps.getSingleDiscount().getEnd();
+        return initCellMap(start, end);
+    }
+
+    @Bean
+    public Map<Integer, CellAddress> getPermanentDiscount() {
+        String start = cellProps.getPermanentDiscount().getStart();
+        String end = cellProps.getPermanentDiscount().getEnd();
+        return initCellMap(start, end);
+    }
+
     private HashMap<Integer, CellAddress> initCellMap(String start, String end) {
         HashMap<Integer, CellAddress> result = new HashMap<>();
         CellAddress firstStudentCellAddress = new CellAddress(start);

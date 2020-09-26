@@ -35,9 +35,13 @@ public class Utils {
         return empty();
     }
 
-    @SneakyThrows
     public static double toDoubleValue(XSSFCell cell) {
         String cellValue = getCellValue(cell);
+        return parseStringToDouble(cellValue);
+    }
+
+    @SneakyThrows
+    public static double parseStringToDouble(String cellValue) {
         if (cellValue.matches("\\d+,?\\d*")) {
             NumberFormat format = NumberFormat.getNumberInstance(new Locale("ru", "RU"));
             Number number = format.parse(cellValue);

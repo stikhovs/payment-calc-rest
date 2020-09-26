@@ -29,19 +29,15 @@ public class InitWeekDaysServiceImpl implements InitWeekDaysService {
         handleClassDays(sheet, group.getClassDaysTwo(), weekDaysMaps.weekDaysTwoMap());
     }
 
-    private void handleClassDays(XSSFSheet sheet, List<String> classDays, Map<DayOfWeek, CellAddress> dayCellMap) {
+    private void handleClassDays(XSSFSheet sheet, List<DayOfWeek> classDays, Map<DayOfWeek, CellAddress> dayCellMap) {
         dayCellMap.forEach((day, weekDayCell) ->
                 getCell(sheet, weekDayCell)
                         .ifPresent(cell -> {
                             if (toBooleanValue(cell)) {
-                                addWeekDay(classDays, day);
+                                classDays.add(day);
                             }
                         })
         );
-    }
-
-    private void addWeekDay(List<String> weekdays, DayOfWeek dayOfWeek) {
-        weekdays.add(dayOfWeek.getValue());
     }
 
 }
