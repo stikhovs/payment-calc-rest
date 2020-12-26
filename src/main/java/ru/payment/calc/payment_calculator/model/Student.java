@@ -10,6 +10,7 @@ public class Student {
     private double balance;
     private boolean indGraphic;
     private boolean hasDebt;
-    private double nextMonthHours;
+    private double hoursToPay;
+    private double moneyToPay;
     private double discount;
 }

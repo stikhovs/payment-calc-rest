@@ -42,7 +42,7 @@ public class Utils {
 
     @SneakyThrows
     public static double parseStringToDouble(String cellValue) {
-        if (cellValue.matches("\\d+,?\\d*")) {
+        if (cellValue.trim().matches("-?\\d+,?\\d*")) {
             NumberFormat format = NumberFormat.getNumberInstance(new Locale("ru", "RU"));
             Number number = format.parse(cellValue);
             return number.doubleValue();

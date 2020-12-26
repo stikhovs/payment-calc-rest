@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ru.payment.calc.payment_calculator.utils.DayOfWeek;
 
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,13 +26,7 @@ public class Group {
     private List<DayOfWeek> classDaysOne;
     private List<DayOfWeek> classDaysTwo;
     private List<Student> studentsInfo;
-    private List<String> scheduleDays;
     private boolean isIndividual;
-    private boolean isMonWenFr;
-    private boolean isTueTh;
-    private boolean isSat;
-    private boolean isOtherSchedule;
-    private String daysFilterString;
     private double nextMonthHours;
 
     public List<DayOfWeek> getClassDaysOne() {
@@ -56,10 +50,4 @@ public class Group {
         return this.studentsInfo;
     }
 
-    public List<String> getScheduleDays() {
-        if(this.scheduleDays == null) {
-            this.scheduleDays = new ArrayList<>();
-        }
-        return this.scheduleDays;
-    }
 }

@@ -2,19 +2,26 @@ package ru.payment.calc.payment_calculator.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Group;
+import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.model.Student;
 import ru.payment.calc.payment_calculator.props.CellProps;
 import ru.payment.calc.payment_calculator.service.InitGroupsService;
 import ru.payment.calc.payment_calculator.service.InitStudentsService;
 import ru.payment.calc.payment_calculator.service.InitWeekDaysService;
+import ru.payment.calc.payment_calculator.service.NextMonthHoursService;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,10 +35,14 @@ import static ru.payment.calc.payment_calculator.utils.Utils.*;
 @Slf4j
 public class InitGroupsServiceImpl implements InitGroupsService {
 
+    private static final int YEAR = 2019;
+    private static final Month MONTH = Month.MAY;
+
     private final CellProps cellProps;
 
     private final InitWeekDaysService initWeekDaysService;
     private final InitStudentsService initStudentsService;
+    private final NextMonthHoursService nextMonthHoursService;
 
     @Override
     public List<Group> init(XSSFWorkbook workbook) {
@@ -76,9 +87,6 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         CellAddress classDurationTwoCell = new CellAddress(cellProps.getGroupInfoCells().getClassDurationTwo());
         CellAddress classStartTimeCell = new CellAddress(cellProps.getGroupInfoCells().getClassStartTime());
 
-        /*CellAddress weekDaysOneMondayCell = new CellAddress(cellProps.getWeekDaysOne().getMonday());
-        CellAddress weekDaysOneTuesdayCell = new CellAddress(cellProps.getWeekDaysOne().getTuesday());*/
-
         group.setSheetName(sheet.getSheetName());
         getCell(sheet, pricePerHourCell)
                 .ifPresent(cell -> group.setPricePerHour(toDoubleValue(cell)));
@@ -100,26 +108,48 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         initWeekDaysService.initWeekDays(sheet, group);
         List<Student> studentList = initStudentsService.initStudents(sheet);
         group.setStudentsInfo(studentList);
-        /*getCell(sheet, weekDaysOneMondayCell)
-                .ifPresent(cell -> {
-                    if (toBooleanValue(cell)) {
-                        group.getClassDaysOne().add(DayOfWeek.MONDAY.getValue());
-                    }
+
+        NextMonthDatesStore nextMonthDatesStore = buildNextMonthDatesStore();
+        double nextMonthHours = nextMonthHoursService.calcNextMonthHours(group, nextMonthDatesStore);
+        group.setNextMonthHours(nextMonthHours);
+
+        group
+                .getStudentsInfo()
+                .forEach(student -> {
+                    student.setHoursToPay(group.getNextMonthHours() - student.getBalance());
+                    student.setMoneyToPay(student.getHoursToPay() * getPriceForStudent(student, group.getPricePerHour()));
                 });
-        getCell(sheet, weekDaysOneTuesdayCell)
-                .ifPresent(cell -> {
-                    if (toBooleanValue(cell)) {
-                        group.getClassDaysOne().add(DayOfWeek.TUESDAY.getValue());
-                    }
-                });*/
 
         return group;
     }
 
-    private void addDay(List<String> weekDays, String day) {
 
-        weekDays.add(day);
+    //TODO: Remove later
+    private NextMonthDatesStore buildNextMonthDatesStore() {
+
+        LocalDate nextMonthDate = LocalDate.of(YEAR, MONTH, 1);
+
+        Set<LocalDate> daysOff = new HashSet<>();
+        daysOff.add(LocalDate.of(YEAR, MONTH, 1));
+        daysOff.add(LocalDate.of(YEAR, MONTH, 9));
+
+        Set<Pair<LocalDate, LocalDate>> datesToChange = new HashSet<>();
+        LocalDate minusDate = LocalDate.of(YEAR, MONTH, 2);
+        LocalDate plusDate = LocalDate.of(YEAR, MONTH, 10);
+        datesToChange.add(Pair.of(minusDate, plusDate));
+
+        return NextMonthDatesStore.builder()
+                .nextMonthDate(nextMonthDate)
+                .daysOff(daysOff)
+                .datesToChange(datesToChange)
+                .build();
     }
 
+    private double getPriceForStudent(Student student, double groupPrice) {
+        if (student.getDiscount() == 0) {
+            return groupPrice;
+        }
+        return groupPrice - groupPrice * student.getDiscount() / 100;
+    }
 
 }

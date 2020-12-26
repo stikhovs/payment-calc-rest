@@ -43,24 +43,14 @@ public class CellProps {
 
     @Data
     public static class WeekDaysOne {
-        private String monday;
-        private String tuesday;
-        private String wednesday;
-        private String thursday;
-        private String friday;
-        private String saturday;
-        private String sunday;
+        private String start;
+        private String end;
     }
 
     @Data
     public static class WeekDaysTwo {
-        private String monday;
-        private String tuesday;
-        private String wednesday;
-        private String thursday;
-        private String friday;
-        private String saturday;
-        private String sunday;
+        private String start;
+        private String end;
     }
 
     @Data

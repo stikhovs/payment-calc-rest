@@ -7,6 +7,7 @@ import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Student;
+import ru.payment.calc.payment_calculator.props.DebtThreshold;
 import ru.payment.calc.payment_calculator.props.StudentInfoMaps;
 import ru.payment.calc.payment_calculator.service.InitStudentsService;
 import ru.payment.calc.payment_calculator.utils.Utils;
@@ -29,6 +30,8 @@ public class InitStudentsServiceImpl implements InitStudentsService {
 
     private final StudentInfoMaps studentInfoMaps;
 
+    private final DebtThreshold debtThreshold;
+
     @Override
     public List<Student> initStudents(XSSFSheet sheet) {
         return studentInfoMaps
@@ -38,6 +41,7 @@ public class InitStudentsServiceImpl implements InitStudentsService {
                 .map(row -> buildStudent(sheet, row))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .peek(this::defineDebt)
                 .collect(Collectors.toList());
     }
 
@@ -97,5 +101,11 @@ public class InitStudentsServiceImpl implements InitStudentsService {
                 .map(Utils::toStringValue)
                 .map(discount -> remove(discount.trim(), "%"))
                 .map(Utils::parseStringToDouble);
+    }
+
+    private void defineDebt(Student student) {
+        if(student.getBalance() < debtThreshold.getThreshold()) {
+            student.setHasDebt(true);
+        }
     }
 }

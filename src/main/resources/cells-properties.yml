@@ -9,21 +9,11 @@ cells:
     classDurationTwo: Y3
     classStartTime: AF2
   weekDaysOne:
-    monday: AY2
-    tuesday: AZ2
-    wednesday: BA2
-    thursday: BB2
-    friday: BC2
-    saturday: BD2
-    sunday: BE2
+    start: AY2
+    end: BE2
   weekDaysTwo:
-    monday: AY4
-    tuesday: AZ4
-    wednesday: BA4
-    thursday: BB4
-    friday: BC4
-    saturday: BD4
-    sunday: BE4
+    start: AY4
+    end: BE4
   studentNames:
     start: B14
     end: B33

@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.props.WeekDaysMaps;
 import ru.payment.calc.payment_calculator.service.InitWeekDaysService;
-import ru.payment.calc.payment_calculator.utils.DayOfWeek;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
 

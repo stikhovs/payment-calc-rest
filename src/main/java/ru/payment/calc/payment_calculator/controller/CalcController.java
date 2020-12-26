@@ -50,10 +50,11 @@ public class CalcController {
         log.info("Start initializing groups");
         List<Group> groupList = initGroupsService.init(workbook);
 
-        ModelAndView modelAndView = new ModelAndView("groups", Map.of("groupList", groupList));
+        ModelAndView modelAndView = new ModelAndView("days", Map.of("workbookName", file.getResource().getFilename()));
 
         log.info("Group initializing completed");
         return groupList;
+        //return modelAndView;
     }
 
     @GetMapping("/init")
