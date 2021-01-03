@@ -5,3 +5,6 @@ spring:
       max-request-size: 100MB
 
 debt.threshold: -0.03
+
+individual:
+  min-price: 1500

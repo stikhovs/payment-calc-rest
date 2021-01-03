@@ -12,7 +12,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
 public class Group {
     private String sheetName;
     private double pricePerHour;

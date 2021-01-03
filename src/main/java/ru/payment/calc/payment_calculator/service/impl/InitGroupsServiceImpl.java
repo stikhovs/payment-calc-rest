@@ -11,6 +11,7 @@ import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.model.Student;
 import ru.payment.calc.payment_calculator.props.CellProps;
+import ru.payment.calc.payment_calculator.props.IndividualProps;
 import ru.payment.calc.payment_calculator.service.InitGroupsService;
 import ru.payment.calc.payment_calculator.service.InitStudentsService;
 import ru.payment.calc.payment_calculator.service.InitWeekDaysService;
@@ -39,19 +40,20 @@ public class InitGroupsServiceImpl implements InitGroupsService {
     private static final Month MONTH = Month.MAY;
 
     private final CellProps cellProps;
+    private final IndividualProps individualProps;
 
     private final InitWeekDaysService initWeekDaysService;
     private final InitStudentsService initStudentsService;
     private final NextMonthHoursService nextMonthHoursService;
 
     @Override
-    public List<Group> init(XSSFWorkbook workbook) {
+    public List<Group> init(XSSFWorkbook workbook, NextMonthDatesStore nextMonthDatesStore) {
         ExecutorService executorService = Executors.
                 newCachedThreadPool();
 
         List<Group> result = getSheets(workbook)
                 .stream()
-                .map(sheet -> supplyAsync(() -> mapSheetToGroup(sheet), executorService))
+                .map(sheet -> supplyAsync(() -> mapSheetToGroup(sheet, nextMonthDatesStore), executorService))
                 .collect(Collectors.toList())
                 .stream()
                 .map(CompletableFuture::join)
@@ -74,7 +76,7 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         return sheets;
     }
 
-    private Group mapSheetToGroup(XSSFSheet sheet) {
+    private Group mapSheetToGroup(XSSFSheet sheet, NextMonthDatesStore nextMonthDatesStore) {
         log.info("Now working on {}", sheet.getSheetName());
 
         Group group = new Group();
@@ -90,6 +92,9 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         group.setSheetName(sheet.getSheetName());
         getCell(sheet, pricePerHourCell)
                 .ifPresent(cell -> group.setPricePerHour(toDoubleValue(cell)));
+        if (group.getPricePerHour() > individualProps.getMinPrice()) {
+            group.setIndividual(true);
+        }
         getCell(sheet, groupIdCell)
                 .ifPresent(cell -> group.setGroupId(toStringValue(cell)));
         getCell(sheet, groupLevelCell)
@@ -109,7 +114,7 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         List<Student> studentList = initStudentsService.initStudents(sheet);
         group.setStudentsInfo(studentList);
 
-        NextMonthDatesStore nextMonthDatesStore = buildNextMonthDatesStore();
+        //NextMonthDatesStore nextMonthDatesStore = buildNextMonthDatesStore();
         double nextMonthHours = nextMonthHoursService.calcNextMonthHours(group, nextMonthDatesStore);
         group.setNextMonthHours(nextMonthHours);
 
