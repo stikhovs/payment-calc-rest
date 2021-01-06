@@ -3,31 +3,30 @@ package ru.payment.calc.payment_calculator.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
+import ru.payment.calc.payment_calculator.model.SheetInfo;
 import ru.payment.calc.payment_calculator.model.Student;
-import ru.payment.calc.payment_calculator.props.CellProps;
-import ru.payment.calc.payment_calculator.props.IndividualProps;
-import ru.payment.calc.payment_calculator.service.InitGroupsService;
-import ru.payment.calc.payment_calculator.service.InitStudentsService;
-import ru.payment.calc.payment_calculator.service.InitWeekDaysService;
-import ru.payment.calc.payment_calculator.service.NextMonthHoursService;
+import ru.payment.calc.payment_calculator.props.*;
+import ru.payment.calc.payment_calculator.service.*;
+import ru.payment.calc.payment_calculator.utils.Utils;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static ru.payment.calc.payment_calculator.utils.Utils.*;
 
@@ -45,13 +44,28 @@ public class InitGroupsServiceImpl implements InitGroupsService {
     private final InitWeekDaysService initWeekDaysService;
     private final InitStudentsService initStudentsService;
     private final NextMonthHoursService nextMonthHoursService;
+    private final WeekDaysMaps weekDaysMaps;
+    private final StudentInfoMaps studentInfoMaps;
+    private final GroupInfoMaps groupInfoMaps;
+
+    private final ExcelReaderService excelReaderService;
 
     @Override
-    public List<Group> init(XSSFWorkbook workbook, NextMonthDatesStore nextMonthDatesStore) {
-        ExecutorService executorService = Executors.
-                newCachedThreadPool();
+    public List<Group> init(Workbook workbook, NextMonthDatesStore nextMonthDatesStore) {
+        /*ExecutorService executorService = Executors.
+                newFixedThreadPool(1);*/
 
-        List<Group> result = getSheets(workbook)
+        return excelReaderService.readWorkbook(workbook)
+                .stream()
+                .filter(SheetInfo::isValid)
+                .peek(System.out::println)
+                .map(sheetInfoMap -> mapSheetToGroup(sheetInfoMap, nextMonthDatesStore))
+                .filter(group -> group.getPricePerHour() != 0.0)
+                .collect(Collectors.toList());
+
+
+
+        /*List<Group> result = getSheets(workbook)
                 .stream()
                 .map(sheet -> supplyAsync(() -> mapSheetToGroup(sheet, nextMonthDatesStore), executorService))
                 .collect(Collectors.toList())
@@ -60,23 +74,54 @@ public class InitGroupsServiceImpl implements InitGroupsService {
                 .filter(group -> group.getPricePerHour() != 0.0)
                 .collect(Collectors.toList());
 
-        executorService.shutdown();
+        executorService.shutdown();*/
 
-        return result;
+        //return result;
     }
 
-    private List<XSSFSheet> getSheets(XSSFWorkbook workbook) {
-        log.info("Getting sheets");
-        List<XSSFSheet> sheets = new ArrayList<>();
-        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            if (!workbook.isSheetHidden(i)) {
-                sheets.add(workbook.getSheetAt(i));
-            }
+    private Group mapSheetToGroup(SheetInfo sheetInfo, NextMonthDatesStore nextMonthDatesStore) {
+        Group group = new Group();
+        CellAddress pricePerHourCell = new CellAddress(cellProps.getGroupInfoCells().getPricePerHour());
+        CellAddress groupIdCell = new CellAddress(cellProps.getGroupInfoCells().getGroupId());
+        CellAddress groupLevelCell = new CellAddress(cellProps.getGroupInfoCells().getGroupLevel());
+        CellAddress teacherOneCell = new CellAddress(cellProps.getGroupInfoCells().getTeacherOne());
+        CellAddress teacherTwoCell = new CellAddress(cellProps.getGroupInfoCells().getTeacherTwo());
+        CellAddress classDurationOneCell = new CellAddress(cellProps.getGroupInfoCells().getClassDurationOne());
+        CellAddress classDurationTwoCell = new CellAddress(cellProps.getGroupInfoCells().getClassDurationTwo());
+        CellAddress classStartTimeCell = new CellAddress(cellProps.getGroupInfoCells().getClassStartTime());
+
+        group.setSheetName(sheetInfo.getSheetName());
+        Map<CellAddress, String> sheetData = sheetInfo.getSheetData();
+        nonNullSet(sheetData.get(pricePerHourCell), str -> group.setPricePerHour(parseStringToDouble(str)));
+        if (group.getPricePerHour() > individualProps.getMinPrice()) {
+            group.setIndividual(true);
         }
-        return sheets;
+        nonNullSet(sheetData.get(groupIdCell), group::setGroupId);
+        nonNullSet(sheetData.get(groupLevelCell), group::setGroupLevel);
+        nonNullSet(sheetData.get(teacherOneCell), group::setTeacherOne);
+        nonNullSet(sheetData.get(teacherTwoCell), group::setTeacherTwo);
+        nonNullSet(sheetData.get(classDurationOneCell), str -> group.setClassDurationOne(Double.parseDouble(str)));
+        nonNullSet(sheetData.get(classDurationTwoCell), str -> group.setClassDurationTwo(Double.parseDouble(str)));
+        nonNullSet(sheetData.get(classStartTimeCell), group::setClassStartTime);
+
+        initWeekDaysService.initWeekDays(sheetData, group);
+        List<Student> studentList = initStudentsService.initStudents(sheetData);
+        group.setStudentsInfo(studentList);
+
+        double nextMonthHours = nextMonthHoursService.calcNextMonthHours(group, nextMonthDatesStore);
+        group.setNextMonthHours(nextMonthHours);
+
+        group.getStudentsInfo()
+                .forEach(student -> {
+                    student.setHoursToPay(group.getNextMonthHours() - student.getBalance());
+                    student.setMoneyToPay(student.getHoursToPay() * getPriceForStudent(student, group.getPricePerHour()));
+                });
+
+
+        return group;
     }
 
-    private Group mapSheetToGroup(XSSFSheet sheet, NextMonthDatesStore nextMonthDatesStore) {
+    private Group mapSheetToGroup(Sheet sheet, NextMonthDatesStore nextMonthDatesStore) {
         log.info("Now working on {}", sheet.getSheetName());
 
         Group group = new Group();
@@ -89,8 +134,46 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         CellAddress classDurationTwoCell = new CellAddress(cellProps.getGroupInfoCells().getClassDurationTwo());
         CellAddress classStartTimeCell = new CellAddress(cellProps.getGroupInfoCells().getClassStartTime());
 
+        List<CellAddress> cellAddressList = List.of(pricePerHourCell, groupIdCell, groupLevelCell, teacherOneCell,
+                teacherTwoCell, classDurationOneCell, classDurationTwoCell, classStartTimeCell);
+        Set<Integer> cellRows = cellAddressList
+                .stream()
+                .map(CellAddress::getRow)
+                .collect(Collectors.toSet());
         group.setSheetName(sheet.getSheetName());
-        getCell(sheet, pricePerHourCell)
+
+        Map<CellAddress, String> result = new HashMap<>();
+
+        Map<DayOfWeek, CellAddress> daysOneMap = weekDaysMaps.weekDaysOneMap();
+        Map<DayOfWeek, CellAddress> daysTwoMap = weekDaysMaps.weekDaysTwoMap();
+
+        sheet.rowIterator().forEachRemaining(row -> {
+            if (cellRows.contains(row.getRowNum())) {
+                cellAddressList
+                        .stream()
+                        .filter(cellAddress -> cellAddress.getRow() == row.getRowNum())
+                        .forEach(cellAddress -> {
+                                    Optional<Cell> cellOptional = ofNullable(row.getCell(cellAddress.getColumn(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL));
+                                    cellOptional.ifPresent(cell ->
+                                            result.put(cellAddress, Utils.getCellValue(cell))
+                                    );
+                                }
+                        );
+
+                result.putAll(getDaysOneSchedule(daysOneMap, row));
+                result.putAll(getDaysOneSchedule(daysTwoMap, row));
+
+                Map<Integer, CellAddress> studentNames = studentInfoMaps.getStudentNames();
+
+            }
+        });
+
+        if (result.containsKey(classStartTimeCell)) {
+            String formatted = DateUtil.getLocalDateTime(Double.parseDouble(result.get(classStartTimeCell))).format(DateTimeFormatter.ofPattern("HH:mm"));
+            result.put(classStartTimeCell, formatted);
+        }
+        System.out.println(result);
+        /*getCell(sheet, pricePerHourCell)
                 .ifPresent(cell -> group.setPricePerHour(toDoubleValue(cell)));
         if (group.getPricePerHour() > individualProps.getMinPrice()) {
             group.setIndividual(true);
@@ -108,11 +191,11 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         getCell(sheet, classDurationTwoCell)
                 .ifPresent(cell -> group.setClassDurationTwo(toDoubleValue(cell)));
         getCell(sheet, classStartTimeCell)
-                .ifPresent(cell -> group.setClassStartTime(toStringValue(cell)));
+                .ifPresent(cell -> group.setClassStartTime(toStringValue(cell)));*/
 
-        initWeekDaysService.initWeekDays(sheet, group);
-        List<Student> studentList = initStudentsService.initStudents(sheet);
-        group.setStudentsInfo(studentList);
+        //initWeekDaysService.initWeekDays(sheet, group);
+        /*List<Student> studentList = initStudentsService.initStudents(sheet);
+        group.setStudentsInfo(studentList);*/
 
         //NextMonthDatesStore nextMonthDatesStore = buildNextMonthDatesStore();
         double nextMonthHours = nextMonthHoursService.calcNextMonthHours(group, nextMonthDatesStore);
@@ -126,6 +209,31 @@ public class InitGroupsServiceImpl implements InitGroupsService {
                 });
 
         return group;
+    }
+
+    private Map<CellAddress, String> getDaysOneSchedule(Map<DayOfWeek, CellAddress> dayOfWeekCellAddressMap, Row row) {
+        Map<CellAddress, String> result = new HashMap<>();
+        List<CellAddress> daysOneCellAddressList = new ArrayList<>(dayOfWeekCellAddressMap.values());
+        Set<Integer> daysOneRowNumSet = daysOneCellAddressList
+                .stream()
+                .map(CellAddress::getRow)
+                .collect(Collectors.toSet());
+
+        dayOfWeekCellAddressMap.forEach((dayOfWeek, cellAddress) -> {
+            if (daysOneRowNumSet.contains(row.getRowNum())) {
+                daysOneCellAddressList
+                        .stream()
+                        .filter(daysOneCellAddress -> daysOneCellAddress.getRow() == row.getRowNum())
+                        .forEach(daysOneCellAddress -> {
+                            Optional<Cell> cellOptional = ofNullable(row.getCell(daysOneCellAddress.getColumn(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL));
+                            cellOptional.ifPresent(cell ->
+                                    result.put(daysOneCellAddress, Utils.getCellValue(cell))
+                            );
+                        });
+            }
+        });
+
+        return result;
     }
 
 

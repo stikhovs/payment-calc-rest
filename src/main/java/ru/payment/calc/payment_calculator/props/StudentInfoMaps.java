@@ -53,8 +53,8 @@ public class StudentInfoMaps {
         HashMap<Integer, CellAddress> result = new HashMap<>();
         CellAddress firstStudentCellAddress = new CellAddress(start);
         CellAddress lastStudentCellAddress = new CellAddress(end);
-        for (int i = 0; i < lastStudentCellAddress.getRow(); i++) {
-            CellAddress cellAddress = new CellAddress(firstStudentCellAddress.getRow() + i, firstStudentCellAddress.getColumn());
+        for (int i = firstStudentCellAddress.getRow(); i < lastStudentCellAddress.getRow(); i++) {
+            CellAddress cellAddress = new CellAddress(i, firstStudentCellAddress.getColumn());
             result.put(cellAddress.getRow(), cellAddress);
         }
         return result;

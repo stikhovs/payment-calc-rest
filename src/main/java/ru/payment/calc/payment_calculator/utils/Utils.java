@@ -2,8 +2,9 @@ package ru.payment.calc.payment_calculator.utils;
 
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.util.Precision;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
@@ -28,49 +29,68 @@ public class Utils {
         return Optional.ofNullable(getCandidate).isPresent() ? ifNonNullCandidateSupplier.get() : null;
     }
 
-    public static Optional<XSSFCell> getCell(XSSFSheet sheet, CellAddress cellAddress) {
-        if (sheet.getFirstRowNum() != -1 && cellAddress != null) {
-            return ofNullable(sheet.getRow(cellAddress.getRow()).getCell(cellAddress.getColumn(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL));
+    public static Optional<Cell> getCell(Sheet sheet, CellAddress cellAddress) {
+        if (sheet.getSheetName().equals("12m")) {
+            System.out.println("Sheet: " + sheet.getSheetName());
+        }
+        if (cellAddress != null) {
+            for (Row row : sheet) {
+                if (row.getRowNum() == cellAddress.getRow()) {
+                    return ofNullable(row.getCell(cellAddress.getColumn(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL));
+                }
+            }
         }
         return empty();
     }
 
-    public static double toDoubleValue(XSSFCell cell) {
+    public static double toDoubleValue(Cell cell) {
         String cellValue = getCellValue(cell);
         return parseStringToDouble(cellValue);
     }
 
     @SneakyThrows
     public static double parseStringToDouble(String cellValue) {
-        if (cellValue.trim().matches("-?\\d+,?\\d*")) {
+        if (NumberUtils.isParsable(cellValue)) {
+            return Precision.round(Double.parseDouble(cellValue), 2);
+        }
+        return 0.0;
+        /*if (cellValue.trim().matches("-?\\d+\\.?\\d*")) {
             NumberFormat format = NumberFormat.getNumberInstance(new Locale("ru", "RU"));
             Number number = format.parse(cellValue);
             return number.doubleValue();
-        }
-        return 0.0;
+        }*/
     }
 
-    public static String toStringValue(XSSFCell cell) {
+    public static String toStringValue(Cell cell) {
         return StringUtils.defaultIfBlank(getCellValue(cell), null);
     }
 
-    public static boolean toBooleanValue(XSSFCell cell) {
+    public static boolean toBooleanValue(Cell cell) {
         return cell.getBooleanCellValue();
     }
 
-    public static String getCellValue(XSSFCell cell) {
-        DataFormatter df = new DataFormatter();
+    public static String getCellValue(Cell cell) {
+        /*DataFormatter df = new DataFormatter();
         XSSFFormulaEvaluator xssfFormulaEvaluator = new XSSFFormulaEvaluator(cell.getSheet().getWorkbook());
-        return df.formatCellValue(cell, xssfFormulaEvaluator);
-        /*CellType cellType = cell.getCellType();
+        return df.formatCellValue(cell, xssfFormulaEvaluator);*/
+        CellType cellType = cell.getCellType();
         switch (cellType) {
             case STRING: return cell.getStringCellValue();
             case NUMERIC: return String.valueOf(cell.getNumericCellValue());
             case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA: return cell.getRawValue();
+            case FORMULA: {
+                CellType cachedFormulaResultType = cell.getCachedFormulaResultType();
+                switch (cachedFormulaResultType) {
+                    case STRING: return cell.getStringCellValue();
+                    case NUMERIC: return String.valueOf(cell.getNumericCellValue());
+                    case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+                    default:
+                        return "";
+                }
+            }
             default:
                 return "";
-        }*/
+        }
     }
 
 }
