@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.time.DayOfWeek.*;
-import static java.time.DayOfWeek.SATURDAY;
 import static org.apache.commons.collections4.CollectionUtils.containsAny;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;

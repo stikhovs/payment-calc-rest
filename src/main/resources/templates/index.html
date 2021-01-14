@@ -6,36 +6,45 @@
     <title>home</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <!--<link rel="stylesheet" href="./css/test.css">-->
+    <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" th:href="@{./css/datepicker/datepicker.css}" type="text/css">
 </head>
 <body>
 <div class="container">
-    <div class="row">
+    <div class="row justify-content-center">
         <div class="col-10">
-            <h1>Помощник расчета квитанций</h1>
+            <h2 class="title">Помощник расчета квитанций</h2>
             <form action="/upload" method="post" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="fileToUpload">Файл</label>
-                    <input type="file" class="form-control" placeholder="Выберите файл" name="fileToUpload"
-                           id="fileToUpload">
-                    <small id="fileHelp" class="form-text text-muted">Загрузите сюда файл</small>
+                    <div class="input-container">
+                        <input type="file" class="form-control" placeholder="Выберите файл" name="fileToUpload"
+                               id="fileToUpload">
+                    </div>
 
-                    <p>Выберите месяц и год:</p>
-                    <input id="dateToCalc" type='text' class='datepicker-here'
-                           name="dateToCalc" autocomplete="off">
+                    <div class="input-container">
+                        <label for="dateToCalc">Выберите месяц</label>
+                        <input id="dateToCalc" type='text' class='datepicker-here'
+                               name="dateToCalc" autocomplete="off">
+                    </div>
+                    <div id="day-container">
+                        <div class="input-container">
+                            <label for="daysOffHidden">Выходные и праздничные дни</label>
+                            <div class="datepicker-here" id="daysOff"></div>
+                            <input type="hidden" name="daysOff" id="daysOffHidden">
+                        </div>
 
-                    <p>Укажите выходные дни:</p>
-                    <div class="datepicker-here" id="daysOff"></div>
-                    <input type="hidden" name="daysOff" id="daysOffHidden">
-
-                    <a class="btn btn-outline-info" id="addDayChange" href="#" role="button">Добавить перенос</a>
-                    <input type="hidden" name="daysFrom" id="daysFromHidden">
-                    <input type="hidden" name="daysTo" id="daysToHidden">
-                    <div id="daysChangeContainer"></div>
+                        <div class="input-container" style="flex-grow: 1">
+                            <label for="addDayChange">Перенос дней</label>
+                            <a class="btn btn-outline-info" id="addDayChange" href="#" role="button">Добавить</a>
+                            <input type="hidden" name="daysFrom" id="daysFromHidden">
+                            <input type="hidden" name="daysTo" id="daysToHidden">
+                            <div id="daysChangeContainer"></div>
+                        </div>
+                    </div>
                 </div>
-
-                <button type="submit" class="btn btn-primary">Начать обработку</button>
+                <div id="submit-btn">
+                    <button type="submit" class="btn btn-primary">Начать обработку</button>
+                </div>
 
             </form>
         </div>
@@ -83,7 +92,6 @@
             "                <input type='text' class='datepicker-here dateTo'\n" +
             "            name=\"dateTo\" autocomplete=\"off\">\n" +
             "                </div>");
-
 
 
         $(".dateFrom").datepicker({

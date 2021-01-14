@@ -1,15 +1,12 @@
 package ru.payment.calc.payment_calculator.controller;
 
 import com.monitorjbl.xlsx.StreamingReader;
-import com.monitorjbl.xlsx.impl.StreamingSheet;
-import com.monitorjbl.xlsx.impl.StreamingSheetReader;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ContentDisposition;
@@ -54,31 +51,6 @@ public class CalcController {
     public String home() {
         return "index";
     }
-
-    /*@PostMapping(path = "/test")
-    @SneakyThrows
-    @ResponseBody
-    public String test(@RequestParam("fileToUpload") MultipartFile file,
-                                               @RequestParam("dateToCalc") String dateToCalc,
-                                               @RequestParam("daysOff") String daysOff,
-                                               @RequestParam("daysFrom") String daysFrom,
-                                               @RequestParam("daysTo") String daysTo) {
-
-        InputStream inputStream = file.getInputStream();
-        Workbook workbook = StreamingReader.builder()
-                .rowCacheSize(100)
-                .bufferSize(4096)
-                .open(inputStream);
-
-        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            Sheet sheet = workbook.getSheetAt(i);
-            System.out.println(sheet.getSheetName());
-
-            StreamingRea
-        }
-
-        return "TEST";
-    }*/
 
     @PostMapping(path = "/upload", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @SneakyThrows

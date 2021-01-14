@@ -1,6 +1,5 @@
 package ru.payment.calc.payment_calculator.model;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data

@@ -2,9 +2,6 @@ package ru.payment.calc.payment_calculator.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellAddress;
 import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Student;
@@ -13,19 +10,15 @@ import ru.payment.calc.payment_calculator.props.StudentInfoMaps;
 import ru.payment.calc.payment_calculator.service.InitStudentsService;
 import ru.payment.calc.payment_calculator.utils.Utils;
 
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.Boolean.parseBoolean;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.remove;
-import static ru.payment.calc.payment_calculator.utils.Utils.*;
+import static ru.payment.calc.payment_calculator.utils.Utils.nonNullSet;
+import static ru.payment.calc.payment_calculator.utils.Utils.parseStringToDouble;
 
 @Service
 @RequiredArgsConstructor
@@ -67,30 +60,6 @@ public class InitStudentsServiceImpl implements InitStudentsService {
                 .collect(Collectors.toList());
     }
 
-
-    private String getStudentName(Sheet sheet, CellAddress cellAddress) {
-        StringBuilder studentName = new StringBuilder();
-        getCell(sheet, cellAddress)
-                .ifPresent(cell -> studentName.append(toStringValue(cell)));
-        return studentName.toString();
-    }
-
-    private Double getStudentBalance(Sheet sheet, CellAddress cellAddress) {
-        return getCell(sheet, cellAddress)
-                .stream()
-                .map(Utils::toDoubleValue)
-                .findFirst()
-                .orElse(0.0);
-    }
-
-    private boolean getIndividualGraphic(Sheet sheet, CellAddress cellAddress) {
-        return getCell(sheet, cellAddress)
-                .stream()
-                .map(Utils::toStringValue)
-                .map(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse(false);
-    }
 
     private double getDiscount(String singleDiscount, String permanentDiscount) {
         return handleDiscount(singleDiscount)

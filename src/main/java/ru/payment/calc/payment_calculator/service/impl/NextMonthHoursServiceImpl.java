@@ -60,7 +60,7 @@ public class NextMonthHoursServiceImpl implements NextMonthHoursService {
                 .stream()
                 .filter(pair -> pair.getKey().equals(localDate))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Пара не найдена!"))
+                .orElseThrow(() -> new RuntimeException("Смена дат: пара не найдена!"))
                 .getValue();
     }
 

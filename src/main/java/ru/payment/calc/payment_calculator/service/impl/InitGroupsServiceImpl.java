@@ -2,33 +2,27 @@ package ru.payment.calc.payment_calculator.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellAddress;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.model.SheetInfo;
 import ru.payment.calc.payment_calculator.model.Student;
-import ru.payment.calc.payment_calculator.props.*;
+import ru.payment.calc.payment_calculator.props.CellProps;
+import ru.payment.calc.payment_calculator.props.IndividualProps;
 import ru.payment.calc.payment_calculator.service.*;
-import ru.payment.calc.payment_calculator.utils.Utils;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static ru.payment.calc.payment_calculator.utils.Utils.*;
+import static ru.payment.calc.payment_calculator.utils.Utils.nonNullSet;
+import static ru.payment.calc.payment_calculator.utils.Utils.parseStringToDouble;
 
 @Service
 @RequiredArgsConstructor
