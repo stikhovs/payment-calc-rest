@@ -2,6 +2,7 @@ package ru.payment.calc.payment_calculator.service.impl;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellAddress;
@@ -50,7 +51,9 @@ public class InitGroupsServiceImpl implements InitGroupsService {
                 .doOnComplete(() -> log.info("Group initializing completed"));
     }
 
+    @SneakyThrows
     private Group mapSheetToGroup(SheetInfo sheetInfo, NextMonthDatesStore nextMonthDatesStore) {
+        Thread.sleep(1000);
         log.info("Now working on {}", sheetInfo.getSheetName());
         Group group = new Group();
         CellProps.GroupInfoCells groupInfoCells = cellProps.getGroupInfoCells();
