@@ -17,6 +17,7 @@ import ru.payment.calc.payment_calculator.props.CellProps;
 import ru.payment.calc.payment_calculator.props.IndividualProps;
 import ru.payment.calc.payment_calculator.service.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,7 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         return Flux.fromIterable(excelReaderService.readWorkbook(workbook))
                 .filter(SheetInfo::isValid)
                 .map(sheetInfoMap -> mapSheetToGroup(sheetInfoMap, nextMonthDatesStore))
+                .delayElements(Duration.ofSeconds(1))
                 .map(group -> ServerSentEvent
                         .<Group>builder()
                         .id(group.getGroupId())

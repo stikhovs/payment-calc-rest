@@ -184,7 +184,7 @@ public class CalcController {
 
         List<Group> groups = new ArrayList<>();
         String groupListUUID = UUID.randomUUID().toString();
-        return Flux.merge(
+        return Flux.mergeSequential(
                 initGroupsService.init(workbook, nextMonthDatesStore)
                 .doOnNext(sseEvent -> groups.add(sseEvent.data())),
                 Flux.just(ServerSentEvent
