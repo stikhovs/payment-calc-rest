@@ -7,24 +7,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.UUID;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedBlockingDeque;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class WebClientController {
-
-    private final WebClient webClient;
-
-    private final BlockingDeque<UUID> blockingDeque = new LinkedBlockingDeque();
 
     @GetMapping(path = "/stream-flux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamFlux() {
