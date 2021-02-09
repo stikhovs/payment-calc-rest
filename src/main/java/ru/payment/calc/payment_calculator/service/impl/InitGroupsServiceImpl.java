@@ -56,6 +56,7 @@ public class InitGroupsServiceImpl implements InitGroupsService {
     @SneakyThrows
     private Group mapSheetToGroup(SheetInfo sheetInfo, NextMonthDatesStore nextMonthDatesStore) {
         log.info("Now working on {}", sheetInfo.getSheetName());
+        Thread.sleep(1000);
         Group group = new Group();
         CellProps.GroupInfoCells groupInfoCells = cellProps.getGroupInfoCells();
         CellAddress pricePerHourCell = new CellAddress(groupInfoCells.getPricePerHour());
