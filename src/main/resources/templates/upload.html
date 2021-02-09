@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>upload</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-10">
+            <h2 class="title">Загрузка</h2>
+            <div id="result"></div>
+            <div id="upload-info">
+                <p>Загрузка началась</p>
+            </div>
+            <div id="sse-result"></div>
+        </div>
+
+    </div>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    $(document).ready(function () {
+        console.log("Hello");
+
+        let uploadRequestId = /*[[${uploadRequestId}]]*/ null;
+        console.log("uploadRequestId: " + uploadRequestId);
+
+        const getWorkbookURL = '/get-workbook?uploadRequestId=' + uploadRequestId;
+
+        $.post(getWorkbookURL, null, function (workBookId) {
+            console.log('workBookId: ' + workBookId);
+            return workBookId;
+        })
+        .done(function( workBookId ) {
+            console.log( "In done: " + workBookId );
+            const initGroupsURL = '/init-groups?uploadRequestId=' + uploadRequestId + "&workbookId=" + workBookId;
+            const eventSource = new EventSource(initGroupsURL);
+            eventSource.addEventListener('periodic-event', (event) => {
+                //console.log("Message id is " + event.lastEventId);
+                console.log(event);
+                const group = JSON.parse(event.data);
+                $("#sse-result").append("<p>Обработан лист: " + group.sheetName + "</p>");
+            });
+            eventSource.addEventListener('the-end', (event) => {
+                console.log(event);
+                console.log("Closing");
+                const groupListUUID = event.lastEventId;
+                console.log("groupListUUID: " + groupListUUID);
+                eventSource.close();
+                $("#sse-result").append("<p>Все группы обработаны</p>");
+
+                $.post('/create-workbook?uploadRequestId=' + uploadRequestId + '&groupListUUID=' + groupListUUID, null, function (workbookId) {
+                    console.log(workbookId);
+                })
+                    .done(function (workbookId) {
+                        console.log("IN DOWNLOAD: " + workbookId);
+                        $("#result").append("<a href='/download/" + workbookId + "?uploadRequestId=" + uploadRequestId + "'>Download</a>");
+                    });
+            });
+        });
+
+    });
+
+    /*]]>*/
+</script>
+
+<script>
+
+
+
+
+</script>
+
+</body>
+</html>

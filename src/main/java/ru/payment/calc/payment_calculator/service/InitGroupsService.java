@@ -1,13 +1,13 @@
 package ru.payment.calc.payment_calculator.service;
 
 import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 
-import java.util.List;
-
 public interface InitGroupsService {
 
-    List<Group> init(Workbook workbook, NextMonthDatesStore nextMonthDatesStore);
+    Flux<ServerSentEvent<Group>> init(Workbook workbook, NextMonthDatesStore nextMonthDatesStore);
 
 }

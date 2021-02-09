@@ -1,10 +1,13 @@
 package ru.payment.calc.payment_calculator.service.impl;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellAddress;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.model.SheetInfo;
@@ -15,18 +18,14 @@ import ru.payment.calc.payment_calculator.service.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static ru.payment.calc.payment_calculator.utils.Utils.nonNullSet;
 import static ru.payment.calc.payment_calculator.utils.Utils.parseStringToDouble;
 
+@Slf4j
+@Getter
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class InitGroupsServiceImpl implements InitGroupsService {
 
     private final CellProps cellProps;
@@ -38,22 +37,17 @@ public class InitGroupsServiceImpl implements InitGroupsService {
     private final NextMonthHoursService nextMonthHoursService;
 
     @Override
-    public List<Group> init(Workbook workbook, NextMonthDatesStore nextMonthDatesStore) {
-        ExecutorService executorService = Executors.
-                newCachedThreadPool();
-
-        List<Group> groups = excelReaderService.readWorkbook(workbook)
-                .stream()
+    public Flux<ServerSentEvent<Group>> init(Workbook workbook, NextMonthDatesStore nextMonthDatesStore) {
+        return Flux.fromIterable(excelReaderService.readWorkbook(workbook))
                 .filter(SheetInfo::isValid)
-                .map(sheetInfoMap -> supplyAsync(() -> mapSheetToGroup(sheetInfoMap, nextMonthDatesStore), executorService))
-                .collect(Collectors.toList())
-                .stream()
-                .map(CompletableFuture::join)
-                .collect(Collectors.toList());
-
-        executorService.shutdown();
-
-        return groups;
+                .map(sheetInfoMap -> mapSheetToGroup(sheetInfoMap, nextMonthDatesStore))
+                .map(group -> ServerSentEvent
+                        .<Group>builder()
+                        .id(group.getGroupId())
+                        .event("periodic-event")
+                        .data(group)
+                        .build())
+                .doOnComplete(() -> log.info("Group initializing completed"));
     }
 
     private Group mapSheetToGroup(SheetInfo sheetInfo, NextMonthDatesStore nextMonthDatesStore) {
