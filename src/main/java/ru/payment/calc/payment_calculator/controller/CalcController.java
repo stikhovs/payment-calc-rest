@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.model.request.UploadRequest;
-import ru.payment.calc.payment_calculator.props.CellProps;
+import ru.payment.calc.payment_calculator.props.FileProps;
 import ru.payment.calc.payment_calculator.service.ExcelService;
 import ru.payment.calc.payment_calculator.service.InitGroupsService;
 
@@ -44,12 +44,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
-@Slf4j
 public class CalcController {
 
-    private final CellProps cellProps;
+    private final FileProps fileProps;
     private final InitGroupsService initGroupsService;
     private final ExcelService excelService;
 
@@ -125,7 +125,12 @@ public class CalcController {
         String fileName = uploadRequest.getFileName();
         log.info("Start processing {}", fileName);
 
-        byte[] tempFileBytes = Files.readAllBytes(Path.of("temp-upload", fileName));
+        String sourceWorkbookDirectory = fileProps.getSourceWorkbookDirectory();
+        byte[] tempFileBytes = Files.readAllBytes(Path.of(sourceWorkbookDirectory, fileName));
+
+        Files.deleteIfExists(Path.of(sourceWorkbookDirectory, fileName));
+        log.info("deleted {} from {}", fileName, sourceWorkbookDirectory);
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream(tempFileBytes);
 
         Workbook workbook = StreamingReader.builder()
@@ -137,31 +142,6 @@ public class CalcController {
         workbookMap.put(workBookId, workbook);
 
         return workBookId;
-
-        /*log.info("Group initializing completed");
-        String month = getNextMonthTitle(nextMonthDatesStore);
-
-        log.info("Start creating Excel Workbook");
-        XSSFWorkbook resultWB = excelService.createExcel(groupList, month);
-        log.info("Excel Workbook created");
-
-        String tempFilePath = saveTempWorkbook(resultWB);
-
-        log.info("Reading bytes from Temp Workbook");
-        byte[] bytes = readTempWorkbook(tempFilePath);
-
-        log.info("Deleting Temp Workbook");
-        Files.deleteIfExists(Path.of(tempFilePath));
-
-        deleteFile(fileName);
-        uploadRequestMap.remove(uploadRequestId);
-        String finalFileName = "Расчет квитанций - " + month + " - " + nextMonthDatesStore.getNextMonthDate().getYear() + ".xlsx";
-        HttpHeaders httpHeaders = getHttpHeaders(finalFileName);
-
-        return ResponseEntity
-                .ok()
-                .headers(httpHeaders)
-                .body(bytes);*/
     }
 
     @GetMapping(value = "/init-groups", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -180,7 +160,8 @@ public class CalcController {
         uploadRequest.setYear(nextMonthDatesStore.getNextMonthDate().getYear());
 
         Workbook workbook = workbookMap.get(workbookId);
-        //return initGroupsService.init(workbook, nextMonthDatesStore);
+        workbookMap.remove(workbookId);
+        log.info("removed workbook {} from workbookMap", workbookId);
 
         List<Group> groups = new ArrayList<>();
         String groupListUUID = UUID.randomUUID().toString();
@@ -208,6 +189,9 @@ public class CalcController {
         List<Group> groups = groupsMap.get(groupListUUID);
         UploadRequest uploadRequest = uploadRequestMap.get(uploadRequestId);
 
+        groupsMap.remove(groupListUUID);
+        log.info("removed groupList {} from groupsMap", groupListUUID);
+
         log.info("Start creating Excel Workbook");
         XSSFWorkbook resultWB = excelService.createExcel(groups, uploadRequest.getMonth());
         log.info("Excel Workbook created");
@@ -221,17 +205,19 @@ public class CalcController {
     @GetMapping("/download/{workbookId}")
     public ResponseEntity<byte[]> downloadWorkbook(@PathVariable("workbookId") String workbookId, @RequestParam("uploadRequestId") String uploadRequestId) {
         log.info("Reading bytes from Temp Workbook");
-        String tempFilePath = Paths.get("temp", workbookId + ".xlsx").toString();
+        String resultWorkbookDirectory = fileProps.getResultWorkbookDirectory();
+        String tempFilePath = Paths.get(resultWorkbookDirectory, workbookId + ".xlsx").toString();
         byte[] bytes = readTempWorkbook(tempFilePath);
 
         UploadRequest uploadRequest = uploadRequestMap.get(uploadRequestId);
+        uploadRequestMap.remove(uploadRequestId);
+        log.info("removed uploadRequest {} from uploadRequestMap", uploadRequestId);
 
         String finalFileName = "Расчет квитанций - " + uploadRequest.getMonth() + " - " + uploadRequest.getYear() + ".xlsx";
         HttpHeaders httpHeaders = getHttpHeaders(finalFileName);
 
-
-        log.info("Deleting Temp Workbook");
         Files.deleteIfExists(Path.of(tempFilePath));
+        log.info("Result report {}.xlsx was downloaded and deleted successfully", workbookId);
 
         return ResponseEntity
                 .ok()
@@ -249,56 +235,11 @@ public class CalcController {
         log.info("cleared uploadRequestMap");
         groupsMap.clear();
         log.info("cleared groupsMap");
-        FileSystemUtils.deleteRecursively(Path.of("temp-upload"));
-        log.info("deleted temp-upload");
-        FileSystemUtils.deleteRecursively(Path.of("temp"));
-        log.info("deleted temp");
+        FileSystemUtils.deleteRecursively(Path.of(fileProps.getSourceWorkbookDirectory()));
+        log.info("deleted source workbook directory");
+        FileSystemUtils.deleteRecursively(Path.of(fileProps.getResultWorkbookDirectory()));
+        log.info("deleted result workbook directory");
     }
-
-    //@PostMapping(path = "/upload", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    /*@SneakyThrows
-    @ResponseBody
-    public ResponseEntity<byte[]> getGroupInfo(@RequestParam("fileToUpload") MultipartFile file,
-                                               @RequestParam("dateToCalc") String dateToCalc,
-                                               @RequestParam("daysOff") String daysOff,
-                                               @RequestParam("daysFrom") String daysFrom,
-                                               @RequestParam("daysTo") String daysTo) {
-        log.info("Start processing {}", file.getResource().getFilename());
-
-        InputStream inputStream = file.getInputStream();
-        Workbook workbook = StreamingReader.builder()
-                .rowCacheSize(100)
-                .bufferSize(4096)
-                .open(inputStream);
-
-        log.info("Start initializing groups");
-        NextMonthDatesStore nextMonthDatesStore = getNextMonthDatesStore(dateToCalc, daysOff, daysFrom, daysTo);
-
-        List<Group> groupList = initGroupsService.init(workbook, nextMonthDatesStore);
-
-        log.info("Group initializing completed");
-        String month = getNextMonthTitle(nextMonthDatesStore);
-
-        log.info("Start creating Excel Workbook");
-        XSSFWorkbook resultWB = excelService.createExcel(groupList, month);
-        log.info("Excel Workbook created");
-
-        String tempFilePath = saveTempWorkbook(resultWB);
-
-        log.info("Reading bytes from Temp Workbook");
-        byte[] bytes = readTempWorkbook(tempFilePath);
-
-        log.info("Deleting Temp Workbook");
-        Files.deleteIfExists(Path.of(tempFilePath));
-
-        String finalFileName = "Расчет квитанций - " + month + " - " + nextMonthDatesStore.getNextMonthDate().getYear() + ".xlsx";
-        HttpHeaders httpHeaders = getHttpHeaders(finalFileName);
-
-        return ResponseEntity
-                .ok()
-                .headers(httpHeaders)
-                .body(bytes);
-    }*/
 
     private NextMonthDatesStore getNextMonthDatesStore(String dateToCalc, String daysOff, String daysFrom, String daysTo) {
         LocalDate nextMonthDate = parseDate(dateToCalc);
@@ -346,7 +287,7 @@ public class CalcController {
     private String saveTempFile(MultipartFile file) {
         UUID uuid = UUID.randomUUID();
         log.info("Start writing the file with UUID {}", uuid);
-        Path directory = Files.createDirectories(Paths.get("temp-upload"));
+        Path directory = Files.createDirectories(Paths.get(fileProps.getSourceWorkbookDirectory()));
         String fileName = uuid + ".xlsx";
         Path tempFile = directory.resolve(fileName);
         file.transferTo(tempFile);
@@ -356,13 +297,13 @@ public class CalcController {
 
     @SneakyThrows
     private void deleteFile(String fileName) {
-        Files.deleteIfExists(Paths.get("temp-upload", fileName));
+        Files.deleteIfExists(Paths.get(fileProps.getSourceWorkbookDirectory(), fileName));
     }
 
     private String saveTempWorkbook(XSSFWorkbook workBook) throws IOException {
         UUID uuid = UUID.randomUUID();
         log.info("Start writing the file with UUID {}", uuid);
-        Path directory = Files.createDirectories(Paths.get("temp"));
+        Path directory = Files.createDirectories(Paths.get(fileProps.getResultWorkbookDirectory()));
         Path tempFile = directory.resolve(uuid + ".xlsx");
         String tempFilePath = tempFile.toString();
         try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tempFilePath))) {

@@ -5,10 +5,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "debt")
+@ConfigurationProperties(prefix = "files")
 @Data
-public class DebtThreshold {
+public class FileProps {
 
-    private double threshold;
+    private String sourceWorkbookDirectory;
+
+    private String resultWorkbookDirectory;
+
+    private Long availableTimeToLive;
 
 }

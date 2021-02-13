@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>upload</title>
+    <title>Обработка - Помощник расчета квитанций</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="./css/style.css">
@@ -12,12 +12,9 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-10">
-            <h2 class="title">Загрузка</h2>
-            <div id="result"></div>
-            <div id="upload-info">
-                <p>Загрузка началась</p>
-            </div>
-            <div id="sse-result"></div>
+            <h2 class="title">Создание отчета</h2>
+            <div id="upload-info"></div>
+            <div id="download"></div>
         </div>
 
     </div>
@@ -36,7 +33,7 @@
     /*<![CDATA[*/
 
     $(document).ready(function () {
-        console.log("Hello");
+        $("#upload-info").append("<p class='info'>Открытие загруженного файла</p>");
 
         let uploadRequestId = /*[[${uploadRequestId}]]*/ null;
         console.log("uploadRequestId: " + uploadRequestId);
@@ -48,29 +45,30 @@
             return workBookId;
         })
         .done(function( workBookId ) {
+            $("#upload-info").append("<p class='info'>Файл открыт. Начало обработки.</p>");
             console.log( "In done: " + workBookId );
             const initGroupsURL = '/init-groups?uploadRequestId=' + uploadRequestId + "&workbookId=" + workBookId;
             const eventSource = new EventSource(initGroupsURL);
             eventSource.addEventListener('periodic-event', (event) => {
-                //console.log("Message id is " + event.lastEventId);
                 console.log(event);
                 const group = JSON.parse(event.data);
-                $("#sse-result").append("<p>Обработан лист: " + group.sheetName + "</p>");
+                $("#upload-info").append("<p class='info'>Обработан лист: " + group.sheetName + "</p>");
             });
             eventSource.addEventListener('the-end', (event) => {
                 console.log(event);
-                console.log("Closing");
+                console.log("Closing event source");
                 const groupListUUID = event.lastEventId;
                 console.log("groupListUUID: " + groupListUUID);
                 eventSource.close();
-                $("#sse-result").append("<p>Все группы обработаны</p>");
+                $("#upload-info").append("<p class='info'>Все листы групп обработаны</p>");
 
                 $.post('/create-workbook?uploadRequestId=' + uploadRequestId + '&groupListUUID=' + groupListUUID, null, function (workbookId) {
+                    $("#upload-info").append("<p class='info'>Создание excel отчета</p>");
                     console.log(workbookId);
                 })
                     .done(function (workbookId) {
-                        console.log("IN DOWNLOAD: " + workbookId);
-                        $("#result").append("<a href='/download/" + workbookId + "?uploadRequestId=" + uploadRequestId + "'>Download</a>");
+                        $("#upload-info").append("<p class='info'>Отчет успешно создан</p>");
+                        $("#download").append("<a class='btn btn-success' href='/download/" + workbookId + "?uploadRequestId=" + uploadRequestId + "'>Скачать отчет</a>");
                     });
             });
         });

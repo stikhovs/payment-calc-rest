@@ -37,3 +37,23 @@ body {
 #day-container {
     display: flex;
 }
+
+#upload-info {
+    max-height: 200px;
+    overflow-y: scroll;
+}
+
+#upload-info .info {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+#download {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+}
