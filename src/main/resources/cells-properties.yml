@@ -9,11 +9,11 @@ cells:
     classDurationTwo: Y3
     classStartTime: AF2
   weekDaysOne:
-    start: AY2
-    end: BE2
+    start: AO2
+    end: AU2
   weekDaysTwo:
-    start: AY4
-    end: BE4
+    start: AO4
+    end: AU4
   studentNames:
     start: B14
     end: B33
