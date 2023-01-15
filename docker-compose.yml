@@ -1,0 +1,8 @@
+version: '3.7'
+
+services:
+  payment-calculator:
+    container_name: payment-calculator
+    image: payment-calculator:latest
+    ports:
+      - "8080:8080"
