@@ -100,7 +100,7 @@ public class InitGroupsServiceImpl implements InitGroupsService {
         if (student.getDiscount() == 0) {
             return groupPrice;
         }
-        return groupPrice - groupPrice * student.getDiscount() / 100;
+        return groupPrice - groupPrice * student.getDiscount() / 100; // TODO: убрать деление на 100
     }
 
 }

@@ -26,6 +26,7 @@ import org.springframework.web.servlet.ModelAndView;
 import reactor.core.publisher.Flux;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
+import ru.payment.calc.payment_calculator.model.request.CalculateRequest;
 import ru.payment.calc.payment_calculator.model.request.UploadRequest;
 import ru.payment.calc.payment_calculator.props.FileProps;
 import ru.payment.calc.payment_calculator.service.ExcelService;
@@ -36,7 +37,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
@@ -82,12 +85,77 @@ public class CalcController {
         return "file-upload";
     }
 
-    @PostMapping("/save")
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     @SneakyThrows
     public String save(@RequestParam("fileToUpload") MultipartFile file) {
         return new ObjectMapper().writeValueAsString(saveTempFile(file));
     }
+
+    @PostMapping(value = "/calculate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @SneakyThrows
+    public Flux<ServerSentEvent<String>> calculate(@RequestBody CalculateRequest calculateRequest) {
+        log.info("Got {}", calculateRequest);
+        log.info("Start processing {}", calculateRequest.getFileName());
+
+        String sourceWorkbookDirectory = fileProps.getSourceWorkbookDirectory();
+        byte[] tempFileBytes = Files.readAllBytes(Path.of(sourceWorkbookDirectory, calculateRequest.getFileName()));
+
+        Files.deleteIfExists(Path.of(sourceWorkbookDirectory, calculateRequest.getFileName()));
+        log.info("deleted {} from {}", calculateRequest.getFileName(), sourceWorkbookDirectory);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(tempFileBytes);
+
+        Workbook workbook = StreamingReader.builder()
+                .rowCacheSize(100)
+                .bufferSize(4096)
+                .open(inputStream);
+
+        String workBookId = UUID.randomUUID().toString();
+        workbookMap.put(workBookId, workbook);
+
+        log.info("Start initializing groups");
+        log.info("workbookId: {}", workBookId);
+
+        NextMonthDatesStore nextMonthDatesStore = getNextMonthDatesStore(
+                calculateRequest.getDateToCalc(),
+                calculateRequest.getDaysOff(),
+                calculateRequest.getDaysFrom(),
+                calculateRequest.getDaysTo());
+
+        /*uploadRequest.setMonth(getNextMonthTitle(nextMonthDatesStore));
+        uploadRequest.setYear(nextMonthDatesStore.getNextMonthDate().getYear());*/
+
+        workbookMap.remove(workBookId);
+        log.info("removed workbook {} from workbookMap", workBookId);
+
+        List<Group> groups = new ArrayList<>();
+        String groupListUUID = UUID.randomUUID().toString();
+
+        return Flux.interval(Duration.ofSeconds(1))
+                .map(sequence -> ServerSentEvent.<String>builder()
+                        .id(String.valueOf(sequence))
+                        .event("message")
+                        .data("SSE - " + LocalTime.now().toString())
+                        .build())
+                .doOnEach(sseSignal -> log.info(sseSignal.toString()));
+
+        /*return Flux.mergeSequential(
+                initGroupsService.init(workbook, nextMonthDatesStore)
+                        .doOnNext(sseEvent -> groups.add(sseEvent.data())),
+                Flux.just(ServerSentEvent
+                                .<Group>builder()
+                                .id(groupListUUID)
+                                .event("the-end")
+                                .data(new Group())
+                                .build())
+                        .doOnComplete(() -> {
+                            log.info("groupListUUID: {}", groupListUUID);
+                            log.info("groups size: {}", groups.size());
+                            groupsMap.put(groupListUUID, groups);
+                        }));*/
+    }
+
 
     @PostMapping("/delete")
     @ResponseBody
