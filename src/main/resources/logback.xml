@@ -9,16 +9,11 @@
         </encoder>
     </appender>
 
-    <!--<logger level="INFO" additivity="true" name="org.apache"/>
+    <logger level="INFO" additivity="true" name="org.apache"/>
     <logger level="INFO" additivity="true" name="org.springframework"/>
-    <logger level="TRACE" additivity="true" name="org.springframework.web.reactive"/>
-    <logger level="TRACE" additivity="true" name="org.springframework.http"/>
-    <logger level="TRACE" additivity="true" name="reactor"/>-->
-
-    <logger level="TRACE" additivity="true" name="*"/>
 
 
-    <root level="TRACE">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
 

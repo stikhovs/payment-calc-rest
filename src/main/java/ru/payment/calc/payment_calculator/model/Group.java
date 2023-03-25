@@ -26,6 +26,7 @@ public class Group {
     private List<Student> studentsInfo;
     private boolean isIndividual;
     private double nextMonthHours;
+    private GroupType groupType;
 
     public List<DayOfWeek> getClassDaysOne() {
         if (this.classDaysOne == null) {

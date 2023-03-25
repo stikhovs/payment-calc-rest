@@ -1,15 +1,58 @@
 package ru.payment.calc.payment_calculator.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.monitorjbl.xlsx.StreamingReader;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.FileSystemUtils;
+import org.springframework.util.ResourceUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+import reactor.core.publisher.Flux;
+import ru.payment.calc.payment_calculator.model.Group;
+import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
+import ru.payment.calc.payment_calculator.model.request.CalculateRequest;
+import ru.payment.calc.payment_calculator.model.request.UploadRequest;
+import ru.payment.calc.payment_calculator.props.FileProps;
+import ru.payment.calc.payment_calculator.service.ExcelService;
+import ru.payment.calc.payment_calculator.service.InitGroupsService;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class CalcController {
 
-    /*private final FileProps fileProps;
+    private final FileProps fileProps;
     private final InitGroupsService initGroupsService;
     private final ExcelService excelService;
 
@@ -80,8 +123,8 @@ public class CalcController {
                 calculateRequest.getDaysFrom(),
                 calculateRequest.getDaysTo());
 
-        *//*uploadRequest.setMonth(getNextMonthTitle(nextMonthDatesStore));
-        uploadRequest.setYear(nextMonthDatesStore.getNextMonthDate().getYear());*//*
+        /*uploadRequest.setMonth(getNextMonthTitle(nextMonthDatesStore));
+        uploadRequest.setYear(nextMonthDatesStore.getNextMonthDate().getYear());*/
 
         workbookMap.remove(workBookId);
         log.info("removed workbook {} from workbookMap", workBookId);
@@ -97,7 +140,7 @@ public class CalcController {
                         .build())
                 .doOnEach(sseSignal -> log.info(sseSignal.toString()));
 
-        *//*return Flux.mergeSequential(
+        /*return Flux.mergeSequential(
                 initGroupsService.init(workbook, nextMonthDatesStore)
                         .doOnNext(sseEvent -> groups.add(sseEvent.data())),
                 Flux.just(ServerSentEvent
@@ -110,7 +153,7 @@ public class CalcController {
                             log.info("groupListUUID: {}", groupListUUID);
                             log.info("groups size: {}", groups.size());
                             groupsMap.put(groupListUUID, groups);
-                        }));*//*
+                        }));*/
     }
 
 
@@ -355,6 +398,6 @@ public class CalcController {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentDisposition(attachment);
         return httpHeaders;
-    }*/
+    }
 
 }

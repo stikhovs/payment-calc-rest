@@ -1,7 +1,9 @@
 package ru.payment.calc.payment_calculator.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.payment.calc.payment_calculator.mapper.GroupMapper;
 import ru.payment.calc.payment_calculator.model.ExcelSheetEnum;
 import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.service.GroupDividerService;
@@ -19,7 +21,10 @@ import static ru.payment.calc.payment_calculator.model.ExcelSheetEnum.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GroupDividerServiceImpl implements GroupDividerService {
+
+    private final GroupMapper groupMapper;
 
     @Override
     public Map<ExcelSheetEnum, List<Group>> divideGroupsBySheets(List<Group> groups) {

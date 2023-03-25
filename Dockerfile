@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM openjdk:17
 
 ARG JAR=build/libs/*SNAPSHOT.jar
 ARG EXPOSE=8080
