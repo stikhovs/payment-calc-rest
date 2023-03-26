@@ -16,3 +16,6 @@ files:
   source-workbook-directory: "temp-upload"
   result-workbook-directory: "temp"
   available-time-to-live: 5 # minutes
+
+frontend:
+  url: ${FRONTEND_URL}
