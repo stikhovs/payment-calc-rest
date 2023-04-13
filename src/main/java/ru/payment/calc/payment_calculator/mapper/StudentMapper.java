@@ -8,7 +8,8 @@ import ru.payment.calc.payment_calculator.controller.dto.response.StudentRespons
 import ru.payment.calc.payment_calculator.model.Student;
 
 import java.math.BigDecimal;
-import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 
 @Mapper(componentModel = "spring")
@@ -20,14 +21,12 @@ public interface StudentMapper {
 
     StudentResponse toStudentResponse(Student student);
 
-    Student toStudent(StudentResponse student);
-
     @Named("getDiscount")
-    default double getDiscount(StudentRequest studentRequest) {
-        return handleDiscount(studentRequest.getSingleDiscount())
+    default BigDecimal getDiscount(StudentRequest studentRequest) {
+        return ofNullable(studentRequest.getSingleDiscount())
                 .orElseGet(() ->
-                        handleDiscount(studentRequest.getPermanentDiscount())
-                                .orElse(0.0));
+                        ofNullable(studentRequest.getPermanentDiscount())
+                                .orElse(BigDecimal.ZERO));
 
     }
 
@@ -36,10 +35,4 @@ public interface StudentMapper {
         return studentRequest.getBalance().compareTo(BigDecimal.valueOf(-0.03)) < 0;
     }
 
-    private Optional<Double> handleDiscount(BigDecimal discount) {
-        if (discount == null) {
-            return Optional.empty();
-        }
-        return Optional.of(discount.doubleValue());
-    }
 }

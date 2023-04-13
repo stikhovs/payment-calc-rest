@@ -2,13 +2,15 @@ package ru.payment.calc.payment_calculator.model;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class Student {
     private String name;
-    private double balance;
+    private BigDecimal balance;
     private boolean indGraphic;
     private boolean hasDebt;
-    private double hoursToPay;
-    private double moneyToPay;
-    private double discount;
+    private BigDecimal hoursToPay;
+    private BigDecimal moneyToPay;
+    private BigDecimal discount;
 }

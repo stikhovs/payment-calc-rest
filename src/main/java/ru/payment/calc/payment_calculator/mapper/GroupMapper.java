@@ -21,10 +21,6 @@ public interface GroupMapper {
     @Mapping(target = "students", source = "studentsInfo")
     GroupResponse toGroupResponse(Group group);
 
-    @Mapping(target = "sheetName", source = "groupName")
-    @Mapping(target = "studentsInfo", source = "students")
-    Group toGroup(GroupResponse group);
-
     @Named("defineIndividual")
     default boolean defineIndividual(GroupRequest request) {
         return request.getPricePerHour().compareTo(BigDecimal.valueOf(1500)) > 0;

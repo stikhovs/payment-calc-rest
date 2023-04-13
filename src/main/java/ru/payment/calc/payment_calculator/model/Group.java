@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,19 +14,19 @@ import java.util.List;
 @AllArgsConstructor
 public class Group {
     private String sheetName;
-    private double pricePerHour;
+    private BigDecimal pricePerHour;
     private String groupId;
     private String groupLevel;
     private String teacherOne;
     private String teacherTwo;
-    private double classDurationOne;
-    private double classDurationTwo;
+    private BigDecimal classDurationOne;
+    private BigDecimal classDurationTwo;
     private String classStartTime;
     private List<DayOfWeek> classDaysOne;
     private List<DayOfWeek> classDaysTwo;
     private List<Student> studentsInfo;
     private boolean isIndividual;
-    private double nextMonthHours;
+    private BigDecimal nextMonthHours;
     private GroupType groupType;
 
     public List<DayOfWeek> getClassDaysOne() {

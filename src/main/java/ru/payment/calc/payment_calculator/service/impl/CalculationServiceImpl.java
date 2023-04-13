@@ -17,6 +17,8 @@ import ru.payment.calc.payment_calculator.model.Student;
 import ru.payment.calc.payment_calculator.service.CalculationService;
 import ru.payment.calc.payment_calculator.service.NextMonthHoursService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.util.HashSet;
 import java.util.List;
@@ -103,27 +105,34 @@ public class CalculationServiceImpl implements CalculationService {
     }
 
     private void setHoursToPay(Group group, Student student) {
-        double hoursToPay = group.getNextMonthHours() - student.getBalance();
-        if (hoursToPay > debtThreshold.getThreshold()) {
-            student.setHoursToPay(hoursToPay);
+        BigDecimal hoursToPay = group.getNextMonthHours().subtract(student.getBalance());
+        if (hoursToPay.compareTo(debtThreshold.getThreshold()) > 0) {
+            student.setHoursToPay(hoursToPay.setScale(2, RoundingMode.HALF_UP));
         } else {
-            student.setHoursToPay(0.0);
+            student.setHoursToPay(BigDecimal.ZERO);
         }
     }
 
     private void setMoneyToPay(Group group, Student student) {
-        if (student.getHoursToPay() > 0.0) {
-            student.setMoneyToPay(student.getHoursToPay() * getPriceForStudent(student, group.getPricePerHour()));
+        if (student.getHoursToPay().compareTo(BigDecimal.ZERO) > 0) {
+            student.setMoneyToPay(
+                    student.getHoursToPay()
+                            .multiply(getPriceForStudent(student, group.getPricePerHour()))
+                            .setScale(2, RoundingMode.HALF_UP)
+            );
         } else {
-            student.setMoneyToPay(0.0);
+            student.setMoneyToPay(BigDecimal.ZERO);
         }
     }
 
-    private double getPriceForStudent(Student student, double groupPrice) {
-        if (student.getDiscount() == 0) {
+    private BigDecimal getPriceForStudent(Student student, BigDecimal groupPrice) {
+        if (student.getDiscount().compareTo(BigDecimal.ZERO) == 0) {
             return groupPrice;
         }
-        return groupPrice - groupPrice * student.getDiscount();
+
+        return groupPrice.subtract(
+                groupPrice.multiply(student.getDiscount())
+        );
     }
 
     private GroupCalculationResponse toGroupCalculationResponse(List<GroupResponse> groups) {

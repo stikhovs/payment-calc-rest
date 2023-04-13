@@ -6,6 +6,7 @@ import ru.payment.calc.payment_calculator.model.Group;
 import ru.payment.calc.payment_calculator.model.NextMonthDatesStore;
 import ru.payment.calc.payment_calculator.service.NextMonthHoursService;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Period;
@@ -13,19 +14,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.math.BigDecimal.ZERO;
+import static java.util.Optional.ofNullable;
+
 @Service
 public class NextMonthHoursServiceImpl implements NextMonthHoursService {
 
     @Override
-    public double calcNextMonthHours(Group group, NextMonthDatesStore nextMonthDatesStore) {
+    public BigDecimal calcNextMonthHours(Group group, NextMonthDatesStore nextMonthDatesStore) {
 
         long nextMonthClassDaysOne = calcNextMonthDays(group.getClassDaysOne(), nextMonthDatesStore);
         long nextMonthClassDaysTwo = calcNextMonthDays(group.getClassDaysTwo(), nextMonthDatesStore);
 
-        double classDurationOne = group.getClassDurationOne();
-        double classDurationTwo = group.getClassDurationTwo();
+        BigDecimal classDurationOne = ofNullable(group.getClassDurationOne()).orElse(ZERO);
+        BigDecimal classDurationTwo = ofNullable(group.getClassDurationTwo()).orElse(ZERO);
 
-        return nextMonthClassDaysOne * classDurationOne + nextMonthClassDaysTwo * classDurationTwo;
+        BigDecimal duration_multiply_days_1 = classDurationOne.multiply(BigDecimal.valueOf(nextMonthClassDaysOne));
+        BigDecimal duration_multiply_days_2 = classDurationTwo.multiply(BigDecimal.valueOf(nextMonthClassDaysTwo));
+
+        return duration_multiply_days_1.add(duration_multiply_days_2);
     }
 
     private long calcNextMonthDays(List<DayOfWeek> classDays, NextMonthDatesStore nextMonthDatesStore) {

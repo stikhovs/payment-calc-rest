@@ -192,7 +192,7 @@ public class ExcelServiceImpl implements ExcelService {
         discountCell.setCellStyle(centerCellStyle);
 
         XSSFCell payHourCell = row.createCell(cellIndex.getAndAdd(1));
-        if (student.getHoursToPay().doubleValue() <= debtThreshold.getThreshold()) {
+        if (student.getHoursToPay().compareTo(debtThreshold.getThreshold()) < 1) {
             payHourCell.setCellValue("не должен");
         } else {
             payHourCell.setCellValue(student.getHoursToPay().doubleValue());
@@ -201,7 +201,7 @@ public class ExcelServiceImpl implements ExcelService {
         payHourCell.setCellStyle(payHourCellStyle);
 
         XSSFCell payMoneyCell = row.createCell(cellIndex.getAndAdd(1));
-        if (student.getMoneyToPay().doubleValue() <= debtThreshold.getThreshold()) {
+        if (student.getMoneyToPay().compareTo(debtThreshold.getThreshold()) < 1) {
             payMoneyCell.setCellValue("");
         } else {
             payMoneyCell.setCellValue(String.format("%.2f", student.getMoneyToPay()) + " руб");
