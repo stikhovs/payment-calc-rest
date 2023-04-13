@@ -1,10 +1,9 @@
 package ru.payment.calc.payment_calculator.service;
 
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.ExcelDownloadRequest;
 
-public interface MyExcelService {
+public interface ExcelService {
 
-    XSSFWorkbook createExcel(ExcelDownloadRequest request);
+    byte[] createExcel(ExcelDownloadRequest request);
 
 }

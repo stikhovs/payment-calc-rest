@@ -3,6 +3,7 @@ package ru.payment.calc.payment_calculator.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -16,8 +17,9 @@ import ru.payment.calc.payment_calculator.controller.dto.request.excel.ExcelDown
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.GroupForExcel;
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.StudentForExcel;
 import ru.payment.calc.payment_calculator.model.ExcelSheetEnum;
-import ru.payment.calc.payment_calculator.service.MyExcelService;
+import ru.payment.calc.payment_calculator.service.ExcelService;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.format.TextStyle;
@@ -32,19 +34,19 @@ import static java.util.Optional.ofNullable;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MyExcelServiceImpl implements MyExcelService {
+public class ExcelServiceImpl implements ExcelService {
 
     private final DebtThreshold debtThreshold;
 
     @Override
-    public XSSFWorkbook createExcel(ExcelDownloadRequest request) {
+    public byte[] createExcel(ExcelDownloadRequest request) {
         XSSFWorkbook workbook = new XSSFWorkbook();
         setSheet(workbook, ExcelSheetEnum.MON_WED_FR, request.getMonWedFr(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.TUE_TH, request.getTueThr(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.SAT, request.getSat(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.IND, request.getIndividuals(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.OTHER, request.getOthers(), request.getMonth());
-        return workbook;
+        return toByteArray(workbook);
     }
 
     private void setSheet(XSSFWorkbook workbook, ExcelSheetEnum sheetName, List<GroupForExcel> groups, String month) {
@@ -292,5 +294,14 @@ public class MyExcelServiceImpl implements MyExcelService {
         payMoneyCellStyle.setAlignment(HorizontalAlignment.CENTER);
         payMoneyCellStyle.setBorderRight(BorderStyle.THIN);
         return payMoneyCellStyle;
+    }
+
+    private byte[] toByteArray(XSSFWorkbook excel) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            excel.write(bos);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
