@@ -11,11 +11,11 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Service;
+import ru.payment.calc.payment_calculator.config.props.DebtThreshold;
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.ExcelDownloadRequest;
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.GroupForExcel;
 import ru.payment.calc.payment_calculator.controller.dto.request.excel.StudentForExcel;
 import ru.payment.calc.payment_calculator.model.ExcelSheetEnum;
-import ru.payment.calc.payment_calculator.props.DebtThreshold;
 import ru.payment.calc.payment_calculator.service.MyExcelService;
 
 import java.math.BigDecimal;
