@@ -109,7 +109,7 @@ public class CalculationServiceImpl implements CalculationService {
         if (hoursToPay.compareTo(debtThreshold.getThreshold()) > 0) {
             student.setHoursToPay(hoursToPay.setScale(2, RoundingMode.HALF_UP));
         } else {
-            student.setHoursToPay(BigDecimal.ZERO);
+            student.setHoursToPay(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
         }
     }
 
@@ -121,7 +121,7 @@ public class CalculationServiceImpl implements CalculationService {
                             .setScale(2, RoundingMode.HALF_UP)
             );
         } else {
-            student.setMoneyToPay(BigDecimal.ZERO);
+            student.setMoneyToPay(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
         }
     }
 

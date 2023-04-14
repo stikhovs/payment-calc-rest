@@ -1,0 +1,78 @@
+{
+  "dateToCalc": "01.05.2023",
+  "daysOff": [
+    "01.05.2023",
+    "02.05.2023"
+  ],
+  "daysChange": [
+    {
+      "from": "09.05.2023",
+      "to": "13.05.2023"
+    }
+  ],
+  "groups": [
+    {
+      "groupName": "test group 1",
+      "pricePerHour": 450,
+      "groupId": "111",
+      "groupLevel": "Elementary",
+      "teacherOne": "John Week",
+      "classDurationOne": 2,
+      "classDurationTwo": 2,
+      "classStartTime": "16:30",
+      "classDaysOne": [
+        "MONDAY"
+      ],
+      "classDaysTwo": [
+        "WEDNESDAY"
+      ],
+      "students": [
+        {
+          "name": "Student 0",
+          "balance": 0.0,
+          "indGraphic": true
+        },
+        {
+          "name": "Student 1",
+          "balance": 0.0,
+          "permanentDiscount": 0.05
+        },
+        {
+          "name": "Student 2",
+          "balance": 0.0044444444444717845,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 3",
+          "balance": 20,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 4",
+          "balance": -0.01,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 5",
+          "balance": -0.03,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 6",
+          "balance": -0.04,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 7",
+          "balance": -6.6666,
+          "indGraphic": false
+        },
+        {
+          "name": "Student 8",
+          "balance": -20,
+          "indGraphic": false
+        }
+      ]
+    }
+  ]
+}
