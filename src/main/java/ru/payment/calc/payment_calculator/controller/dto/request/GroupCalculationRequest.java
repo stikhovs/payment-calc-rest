@@ -19,4 +19,11 @@ public class GroupCalculationRequest {
     private List<DayChange> daysChange;
 
     private List<GroupRequest> groups;
+
+
+    @Override
+    public String toString() {
+        return String.format("GroupCalculationRequest{dateToCalc: %s; number of groups: %d; daysOff: %s; daysChange: %s}",
+                getDateToCalc(), getGroups().size(), getDaysOff(), getDaysChange());
+    }
 }

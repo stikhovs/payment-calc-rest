@@ -14,4 +14,11 @@ public class ExcelDownloadRequest {
     private List<GroupForExcel> individuals;
     private List<GroupForExcel> others;
 
+
+    @Override
+    public String toString() {
+        return String.format("ExcelDownloadRequest{" +
+                "Month: %s; monWedFr groups number: %d; tueThr groups number: %d; sat groups number: %d; individuals number: %d; other groups number: %d}",
+                getMonth(), getMonWedFr().size(), getTueThr().size(), getSat().size(), getIndividuals().size(), getOthers().size());
+    }
 }

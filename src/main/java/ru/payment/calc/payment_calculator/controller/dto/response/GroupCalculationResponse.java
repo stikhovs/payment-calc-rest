@@ -13,4 +13,9 @@ public class GroupCalculationResponse {
     private final List<GroupResponse> individuals;
     private final List<GroupResponse> others;
 
+    @Override
+    public String toString() {
+        return String.format("GroupCalculationResponse{monWedFr groups number: %d; tueThr groups number: %d; sat groups number: %d; individuals number: %d; other groups number: %d}",
+                getMonWedFr().size(), getTueThr().size(), getSat().size(), getIndividuals().size(), getOthers().size());
+    }
 }

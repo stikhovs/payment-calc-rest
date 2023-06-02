@@ -41,8 +41,11 @@ public class CalculationServiceImpl implements CalculationService {
 
     @Override
     public GroupCalculationResponse calculate(GroupCalculationRequest request) {
+        log.info("Start calculation process. {}", request);
         List<GroupResponse> groupResponses = calculateGroups(request);
-        return toGroupCalculationResponse(groupResponses);
+        GroupCalculationResponse result = toGroupCalculationResponse(groupResponses);
+        log.info("Calculation process is done for {}. Result: {}", request, result);
+        return result;
     }
 
     private List<GroupResponse> calculateGroups(GroupCalculationRequest request) {
@@ -140,11 +143,11 @@ public class CalculationServiceImpl implements CalculationService {
                 .collect(Collectors.groupingBy(GroupResponse::getGroupType));
 
         return new GroupCalculationResponse(
-                byGroupType.get(GroupType.MON_WED_FR),
-                byGroupType.get(GroupType.TUE_TH),
-                byGroupType.get(GroupType.SAT),
-                byGroupType.get(GroupType.IND),
-                byGroupType.get(GroupType.OTHER)
+                byGroupType.getOrDefault(GroupType.MON_WED_FR, List.of()),
+                byGroupType.getOrDefault(GroupType.TUE_TH, List.of()),
+                byGroupType.getOrDefault(GroupType.SAT, List.of()),
+                byGroupType.getOrDefault(GroupType.IND, List.of()),
+                byGroupType.getOrDefault(GroupType.OTHER, List.of())
         );
     }
 

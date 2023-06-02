@@ -40,13 +40,16 @@ public class ExcelServiceImpl implements ExcelService {
 
     @Override
     public byte[] createExcel(ExcelDownloadRequest request) {
+        log.info("Start excel creation process. {}", request);
         XSSFWorkbook workbook = new XSSFWorkbook();
         setSheet(workbook, ExcelSheetEnum.MON_WED_FR, request.getMonWedFr(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.TUE_TH, request.getTueThr(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.SAT, request.getSat(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.IND, request.getIndividuals(), request.getMonth());
         setSheet(workbook, ExcelSheetEnum.OTHER, request.getOthers(), request.getMonth());
-        return toByteArray(workbook);
+        byte[] result = toByteArray(workbook);
+        log.info("Excel creation process is done for {}", request);
+        return result;
     }
 
     private void setSheet(XSSFWorkbook workbook, ExcelSheetEnum sheetName, List<GroupForExcel> groups, String month) {
