@@ -190,7 +190,9 @@ public class ExcelServiceImpl implements ExcelService {
 
         XSSFCell discountCell = row.createCell(cellIndex.getAndAdd(1));
         if (student.getDiscount() != null && student.getDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            discountCell.setCellValue(student.getDiscount().intValue() + "%");
+            discountCell.setCellValue(student.getDiscount()
+                    .multiply(BigDecimal.valueOf(100))
+                    .intValue() + "%");
         }
         discountCell.setCellStyle(centerCellStyle);
 
