@@ -1,21 +1,7 @@
 server:
   port: 8080
 
-spring:
-  servlet:
-    multipart:
-      max-file-size: 100MB
-      max-request-size: 100MB
-
 debt.threshold: -0.03
-
-individual:
-  min-price: 1500
-
-files:
-  source-workbook-directory: "temp-upload"
-  result-workbook-directory: "temp"
-  available-time-to-live: 5 # minutes
 
 frontend:
   url: ${FRONTEND_URL}
