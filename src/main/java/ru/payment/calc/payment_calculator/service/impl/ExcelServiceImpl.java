@@ -3,6 +3,7 @@ package ru.payment.calc.payment_calculator.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -11,53 +12,62 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Service;
+import ru.payment.calc.payment_calculator.config.props.DebtThreshold;
+import ru.payment.calc.payment_calculator.controller.dto.request.excel.ExcelDownloadRequest;
+import ru.payment.calc.payment_calculator.controller.dto.request.excel.GroupForExcel;
+import ru.payment.calc.payment_calculator.controller.dto.request.excel.StudentForExcel;
 import ru.payment.calc.payment_calculator.model.ExcelSheetEnum;
-import ru.payment.calc.payment_calculator.model.Group;
-import ru.payment.calc.payment_calculator.model.Student;
-import ru.payment.calc.payment_calculator.props.DebtThreshold;
 import ru.payment.calc.payment_calculator.service.ExcelService;
-import ru.payment.calc.payment_calculator.service.GroupDividerService;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExcelServiceImpl implements ExcelService {
 
-    private final GroupDividerService groupDividerService;
-
     private final DebtThreshold debtThreshold;
 
     @Override
-    public XSSFWorkbook createExcel(List<Group> groups, String month) {
-        XSSFWorkbook workbook = initWorkbook();
+    public byte[] createExcel(ExcelDownloadRequest request) {
+        log.info("Start excel creation process. {}", request);
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        setSheet(workbook, ExcelSheetEnum.MON_WED_FR, request.getMonWedFr(), request.getMonth());
+        setSheet(workbook, ExcelSheetEnum.TUE_TH, request.getTueThr(), request.getMonth());
+        setSheet(workbook, ExcelSheetEnum.SAT, request.getSat(), request.getMonth());
+        setSheet(workbook, ExcelSheetEnum.IND, request.getIndividuals(), request.getMonth());
+        setSheet(workbook, ExcelSheetEnum.OTHER, request.getOthers(), request.getMonth());
+        byte[] result = toByteArray(workbook);
+        log.info("Excel creation process is done for {}", request);
+        return result;
+    }
 
-        Map<ExcelSheetEnum, List<Group>> groupsBySheets = groupDividerService.divideGroupsBySheets(groups);
-
-        groupsBySheets.forEach((excelSheetEnum, groupList) -> {
-            XSSFSheet sheet = workbook.getSheet(excelSheetEnum.getName());
-            AtomicInteger rowNum = new AtomicInteger(0);
-            createSheetHeader(workbook, sheet, rowNum, month);
-            groupList.forEach(group -> {
-                createGroupHeader(workbook, sheet, rowNum, group);
-                createGroupSubHeader(workbook, sheet, rowNum);
-                AtomicInteger studentNumber = new AtomicInteger(1);
-                group.getStudentsInfo().forEach(student ->
-                        createStudentInfo(workbook, sheet, rowNum, student, studentNumber)
-                );
-                setSpaceBetweenGroups(sheet, rowNum);
-            });
-            setColumnAutosize(sheet);
-        });
-
-        return workbook;
+    private void setSheet(XSSFWorkbook workbook, ExcelSheetEnum sheetName, List<GroupForExcel> groups, String month) {
+        XSSFSheet sheet = workbook.createSheet(sheetName.getName());
+        AtomicInteger rowNum = new AtomicInteger(0);
+        createSheetHeader(workbook, sheet, rowNum, month);
+        Optional.ofNullable(groups).ifPresent(
+                groupList -> groupList.forEach(group -> {
+                    createGroupHeader(workbook, sheet, rowNum, group);
+                    createGroupSubHeader(workbook, sheet, rowNum);
+                    AtomicInteger studentNumber = new AtomicInteger(1);
+                    group.getStudents().forEach(student ->
+                            createStudentInfo(workbook, sheet, rowNum, student, studentNumber)
+                    );
+                    setSpaceBetweenGroups(sheet, rowNum);
+                })
+        );
+        setColumnAutosize(sheet);
     }
 
     private void createSheetHeader(XSSFWorkbook workbook, XSSFSheet sheet, AtomicInteger rowNum, String month) {
@@ -70,7 +80,7 @@ public class ExcelServiceImpl implements ExcelService {
         cell.setCellStyle(headerCellStyle);
     }
 
-    private void createGroupHeader(XSSFWorkbook workbook, XSSFSheet sheet, AtomicInteger rowNum, Group group) {
+    private void createGroupHeader(XSSFWorkbook workbook, XSSFSheet sheet, AtomicInteger rowNum, GroupForExcel group) {
         int rowIndex = rowNum.getAndAdd(1);
         XSSFRow row = sheet.createRow(rowIndex);
         XSSFCell cell = row.createCell(0);
@@ -81,11 +91,11 @@ public class ExcelServiceImpl implements ExcelService {
         RegionUtil.setBorderLeft(BorderStyle.THIN, new CellRangeAddress(rowIndex, rowIndex, 0, 4), sheet);
         cell.setCellValue(
                 group.getGroupId()
-                + " (" + group.getSheetName() + "), " + (int) group.getPricePerHour() + " р/ач "
-                + ", Начало: " + group.getClassStartTime() + ", " + getScheduleDays(group)
-                + "\n" + getTeachers(group) + ", " + group.getGroupLevel()
-                + ", Длительность: " + getDuration(group) + " а/ч" + ", "
-                + "\n" + "Часов в следующем месяце: " + String.format("%.2f", group.getNextMonthHours()));
+                        + " (" + group.getGroupName() + "), " + group.getPricePerHour().intValue() + " р/ач "
+                        + ", Начало: " + group.getClassStartTime() + ", " + getScheduleDays(group)
+                        + "\n" + getTeachers(group) + ", " + group.getGroupLevel()
+                        + ", Длительность: " + getDuration(group) + " а/ч" + ", "
+                        + "\n" + "Часов в следующем месяце: " + String.format("%.2f", group.getNextMonthHours()));
         cell.getRow().setHeight((short) (cell.getRow().getHeight() * 3));
 
         XSSFCellStyle groupInfoCellStyle = createGroupInfoCellStyle(workbook);
@@ -96,13 +106,13 @@ public class ExcelServiceImpl implements ExcelService {
         leftBorderCell.setCellStyle(leftBorderCellStyle);
     }
 
-    private String getDuration(Group group) {
+    private String getDuration(GroupForExcel group) {
         String classDurationOne = null;
         String classDurationTwo = null;
-        if (group.getClassDurationOne() != 0.0) {
+        if (group.getClassDurationOne() != null && group.getClassDurationOne().compareTo(BigDecimal.ZERO) > 0) {
             classDurationOne = String.format("%.2f", group.getClassDurationOne());
         }
-        if (group.getClassDurationTwo() != 0.0) {
+        if (group.getClassDurationTwo() != null && group.getClassDurationTwo().compareTo(BigDecimal.ZERO) > 0) {
             classDurationTwo = String.format("%.2f", group.getClassDurationTwo());
         }
 
@@ -112,7 +122,7 @@ public class ExcelServiceImpl implements ExcelService {
                 .orElse("NONE");
     }
 
-    private String getTeachers(Group group) {
+    private String getTeachers(GroupForExcel group) {
         String teacherOne = group.getTeacherOne();
         String teacherTwo = group.getTeacherTwo();
 
@@ -122,11 +132,13 @@ public class ExcelServiceImpl implements ExcelService {
                 .orElse("NONE");
     }
 
-    private String getScheduleDays(Group group) {
+    private String getScheduleDays(GroupForExcel group) {
         List<DayOfWeek> classDaysOne = group.getClassDaysOne();
         List<DayOfWeek> classDaysTwo = group.getClassDaysTwo();
         return CollectionUtils
-                .union(classDaysOne, classDaysTwo)
+                .union(
+                        ofNullable(classDaysOne).orElseGet(List::of),
+                        ofNullable(classDaysTwo).orElseGet(List::of))
                 .stream()
                 .distinct()
                 .sorted()
@@ -157,7 +169,7 @@ public class ExcelServiceImpl implements ExcelService {
         cell.setCellStyle(groupHeaderCellStyle);
     }
 
-    private void createStudentInfo(XSSFWorkbook workbook, XSSFSheet sheet, AtomicInteger rowNum, Student student, AtomicInteger studentNumber) {
+    private void createStudentInfo(XSSFWorkbook workbook, XSSFSheet sheet, AtomicInteger rowNum, StudentForExcel student, AtomicInteger studentNumber) {
         int rowIndex = rowNum.getAndAdd(1);
         XSSFRow row = sheet.createRow(rowIndex);
         AtomicInteger cellIndex = new AtomicInteger(0);
@@ -177,22 +189,24 @@ public class ExcelServiceImpl implements ExcelService {
 
 
         XSSFCell discountCell = row.createCell(cellIndex.getAndAdd(1));
-        if (student.getDiscount() != 0.0) {
-            discountCell.setCellValue((int) student.getDiscount() + "%");
+        if (student.getDiscount() != null && student.getDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            discountCell.setCellValue(student.getDiscount()
+                    .multiply(BigDecimal.valueOf(100))
+                    .intValue() + "%");
         }
         discountCell.setCellStyle(centerCellStyle);
 
         XSSFCell payHourCell = row.createCell(cellIndex.getAndAdd(1));
-        if (student.getHoursToPay() <= debtThreshold.getThreshold()) {
+        if (student.getHoursToPay().compareTo(debtThreshold.getThreshold()) < 1) {
             payHourCell.setCellValue("не должен");
         } else {
-            payHourCell.setCellValue(student.getHoursToPay());
+            payHourCell.setCellValue(student.getHoursToPay().doubleValue());
         }
         XSSFCellStyle payHourCellStyle = createPayHourCellStyle(workbook);
         payHourCell.setCellStyle(payHourCellStyle);
 
         XSSFCell payMoneyCell = row.createCell(cellIndex.getAndAdd(1));
-        if (student.getMoneyToPay() <= debtThreshold.getThreshold()) {
+        if (student.getMoneyToPay().compareTo(debtThreshold.getThreshold()) < 1) {
             payMoneyCell.setCellValue("");
         } else {
             payMoneyCell.setCellValue(String.format("%.2f", student.getMoneyToPay()) + " руб");
@@ -218,14 +232,6 @@ public class ExcelServiceImpl implements ExcelService {
         for (int i = 0; i < 5; i++) {
             sheet.autoSizeColumn(i);
         }
-    }
-
-    private XSSFWorkbook initWorkbook() {
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        Stream.of(ExcelSheetEnum.values())
-                .map(ExcelSheetEnum::getName)
-                .forEach(workbook::createSheet);
-        return workbook;
     }
 
     private XSSFCellStyle createGroupInfoCellStyle(XSSFWorkbook workbook) {
@@ -295,4 +301,12 @@ public class ExcelServiceImpl implements ExcelService {
         return payMoneyCellStyle;
     }
 
+    private byte[] toByteArray(XSSFWorkbook excel) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            excel.write(bos);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -1,13 +1,11 @@
-FROM openjdk:11
+FROM gradle:jdk17 AS build
+COPY --chown=gradle:gradle . /home/gradle/src
+WORKDIR /home/gradle/src
+RUN gradle clean bootJar
 
-ARG JAR=build/libs/*SNAPSHOT.jar
-ARG EXPOSE=8080
+FROM openjdk:17
+EXPOSE 8080
+RUN mkdir /app
+COPY --from=build /home/gradle/src/build/libs/*.jar /app/app.jar
+CMD exec java $JAVA_OPTS -jar /app/app.jar
 
-ENV JAR=${JAR}
-ENV EXPOSE=${EXPOSE}
-
-COPY ${JAR} /app.jar
-
-CMD exec java $JAVA_OPTS -jar /app.jar
-
-EXPOSE ${EXPOSE}
