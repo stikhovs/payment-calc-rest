@@ -3,8 +3,7 @@
 <configuration scan="true" scanPeriod="15 seconds" debug="false">
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%boldMagenta(%d{dd-MM-yyyy HH:mm:ss.SSS}) %gray([%thread]) %highlight(%-5level) %cyan(%logger{30})
-                - %msg%n%throwable
+            <pattern>%boldMagenta(%d{dd-MM-yyyy HH:mm:ss.SSS}) %gray([%thread]) %highlight(%-5level) %cyan(%logger) - %msg%n%throwable
             </pattern>
         </encoder>
     </appender>
